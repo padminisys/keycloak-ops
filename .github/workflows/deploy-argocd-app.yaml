@@ -35,12 +35,6 @@ jobs:
         env:
           KUBECONFIG: ./kubeconfig.yaml
 
-      - name: Wait for ArgoCD Sync
-        run: |
-          kubectl wait --for=condition=healthy application/keycloak-operator -n argocd --timeout=300s
-        env:
-          KUBECONFIG: ./kubeconfig.yaml
-
       - name: Verify Keycloak Operator Deployment
         run: |
           kubectl get pods -n keycloak
