@@ -25,7 +25,7 @@ jobs:
 
       - name: Verify Kustomize Configuration
         run: |
-          kubectl kustomize k8s/keycloak-operator --dry-run
+          kubectl kustomize k8s/keycloak-operator
         env:
           KUBECONFIG: ./kubeconfig.yaml
 
