@@ -12,7 +12,7 @@ spec:
     username: keycloak  # Specify directly
     passwordSecret:
       name: keycloak-postgresql
-      key: keycloak-password
+      key: password
     port: 5432
   http:
     enabled: true
