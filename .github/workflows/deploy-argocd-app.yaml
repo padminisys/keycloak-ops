@@ -41,6 +41,12 @@ jobs:
         env:
           KUBECONFIG: ./kubeconfig.yaml
 
+      - name: Apply Certificates ArgoCD Application
+        run: |
+          kubectl apply -f argocd-apps/certificates/certificates-app.yaml
+        env:
+          KUBECONFIG: ./kubeconfig.yaml
+
       - name: Apply Keycloak Instance ArgoCD Application
         run: |
           kubectl apply -f argocd-apps/keycloak/keycloak-instance-app.yaml
@@ -56,8 +62,15 @@ jobs:
 
       - name: Verify PostgreSQL Deployment
         run: |
-          kubectl get pods -n keycloak
-          kubectl get svc -n keycloak
+          kubectl get pods -n keycloak-db
+          kubectl get svc -n keycloak-db
+        env:
+          KUBECONFIG: ./kubeconfig.yaml
+
+      - name: Verify Certificates Deployment
+        run: |
+          kubectl get certificates -n keycloak
+          kubectl get secrets -n keycloak | grep tls
         env:
           KUBECONFIG: ./kubeconfig.yaml
 

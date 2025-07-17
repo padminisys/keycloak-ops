@@ -15,8 +15,11 @@ spec:
       key: password
     port: 5432
   http:
-    enabled: true
-  https:
     enabled: false
+  https:
+    enabled: true
+    tlsSecret: keycloak-tls-secret
+  hostname:
+    hostname: iam.padmini.systems
   proxy:
     headers: xforwarded
