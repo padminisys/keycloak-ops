@@ -29,8 +29,8 @@ spec:
     tlsSecret: keycloak-tls-secret
   hostname:
     hostname: https://iam.padmini.systems
-    admin: https://iam.padmini.systems/admin
-    strict: false
+    admin: https://iam.padmini.systems
+    strict: true
     backchannelDynamic: true
   features:
     enabled:
