@@ -1,4 +1,4 @@
-name: Deploy Keycloak Operator via ArgoCD
+name: Deploy Keycloak Infrastructure via ArgoCD
 on:
   push:
     branches:
@@ -29,9 +29,21 @@ jobs:
         env:
           KUBECONFIG: ./kubeconfig.yaml
 
-      - name: Apply ArgoCD Application
+      - name: Apply Keycloak Operator ArgoCD Application
         run: |
           kubectl apply -f argocd-apps/keycloak-operator-app.yaml
+        env:
+          KUBECONFIG: ./kubeconfig.yaml
+
+      - name: Apply PostgreSQL ArgoCD Application
+        run: |
+          kubectl apply -f argocd-apps/postgresql/postgresql-app.yaml
+        env:
+          KUBECONFIG: ./kubeconfig.yaml
+
+      - name: Apply Keycloak Instance ArgoCD Application
+        run: |
+          kubectl apply -f argocd-apps/keycloak/keycloak-instance-app.yaml
         env:
           KUBECONFIG: ./kubeconfig.yaml
 
@@ -40,4 +52,18 @@ jobs:
           kubectl get pods -n keycloak
           kubectl get crd | grep keycloak
         env:
-          KUBECONFIG: ./kubeconfig.yaml 
+          KUBECONFIG: ./kubeconfig.yaml
+
+      - name: Verify PostgreSQL Deployment
+        run: |
+          kubectl get pods -n keycloak
+          kubectl get svc -n keycloak
+        env:
+          KUBECONFIG: ./kubeconfig.yaml
+
+      - name: Verify Keycloak Instance Deployment
+        run: |
+          kubectl get keycloaks -n keycloak
+          kubectl get pods -n keycloak -l app=keycloak
+        env:
+          KUBECONFIG: ./kubeconfig.yaml

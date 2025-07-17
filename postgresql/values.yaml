@@ -1,0 +1,48 @@
+# PostgreSQL configuration for Keycloak
+# padmini-grade configuration with auto-generated secrets
+
+architecture: standalone
+
+auth:
+  username: "keycloak"
+  database: "keycloak"
+  # Let Bitnami auto-generate the password
+  # This will create a secret automatically
+
+primary:
+  service:
+    type: ClusterIP
+    ports:
+      postgresql: 5432
+  
+  persistence:
+    enabled: true
+    size: 20Gi
+    storageClass: ""
+  
+  resourcesPreset: "nano"
+  
+  # Security settings
+  securityContext:
+    enabled: true
+    runAsUser: 1001
+    fsGroup: 1001
+  
+  # Readiness and liveness probes
+  readinessProbe:
+    enabled: true
+    initialDelaySeconds: 5
+    periodSeconds: 10
+  
+  livenessProbe:
+    enabled: true
+    initialDelaySeconds: 30
+    periodSeconds: 10
+
+# Disable metrics for simplicity
+metrics:
+  enabled: false
+
+# Disable backup for now (can be enabled later)
+backup:
+  enabled: false
