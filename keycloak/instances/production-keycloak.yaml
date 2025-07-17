@@ -15,11 +15,23 @@ spec:
       key: password
     port: 5432
   http:
-    enabled: false
-  https:
-    enabled: true
+    httpEnabled: true
+    httpPort: 8180
+    httpsPort: 8543
     tlsSecret: keycloak-tls-secret
   hostname:
-    hostname: iam.padmini.systems
+    hostname: https://iam.padmini.systems
+    admin: https://iam.padmini.systems/admin
+    strict: false
+    backchannelDynamic: true
+  features:
+    enabled:
+      - docker
+      - authorization
+    disabled:
+      - admin
+      - step-up-authentication
+  transaction:
+    xaEnabled: false 
   proxy:
     headers: xforwarded
