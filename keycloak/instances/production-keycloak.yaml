@@ -36,7 +36,6 @@ spec:
     enabled:
       - docker
       - authorization
-    disabled:
       - admin
       - step-up-authentication
   transaction:
