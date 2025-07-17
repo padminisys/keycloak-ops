@@ -15,8 +15,6 @@ spec:
   db:
     vendor: postgres
     host: keycloak-postgresql.keycloak.svc.cluster.local
-    name: keycloak
-    username: keycloak  # Specify directly
     passwordSecret:
       name: keycloak-postgresql
       key: password
