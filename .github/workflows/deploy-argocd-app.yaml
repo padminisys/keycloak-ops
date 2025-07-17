@@ -25,13 +25,13 @@ jobs:
 
       - name: Verify Kustomize Configuration
         run: |
-          kubectl kustomize k8s/keycloak-operator
+          kubectl kustomize keycloak-operator
         env:
           KUBECONFIG: ./kubeconfig.yaml
 
       - name: Apply ArgoCD Application
         run: |
-          kubectl apply -f k8s/argocd-apps/keycloak-operator-app.yaml
+          kubectl apply -f argocd-apps/keycloak-operator-app.yaml
         env:
           KUBECONFIG: ./kubeconfig.yaml
 
