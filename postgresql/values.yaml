@@ -21,7 +21,7 @@ primary:
   
   persistence:
     enabled: true
-    size: 20Gi
+    size: 25Gi
     storageClass: ""
   
   resourcesPreset: "nano"
