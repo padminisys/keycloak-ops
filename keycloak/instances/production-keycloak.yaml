@@ -1,4 +1,4 @@
-apiVersion: k8s.keycloak.org/v1
+apiVersion: k8s.keycloak.org/v2alpha1
 kind: Keycloak
 metadata:
   name: padmini-keycloak
@@ -9,26 +9,14 @@ spec:
     vendor: postgres
     host: keycloak-postgresql.keycloak.svc.cluster.local
     name: keycloak
-    username: keycloak
+    username: keycloak  # Specify directly
     passwordSecret:
       name: keycloak-postgresql
-      key: password
+      key: keycloak-password
     port: 5432
   http:
     enabled: true
   https:
     enabled: false
-  version: "26.3.1"
-  image: quay.io/keycloak/keycloak:26.3.1
-  imagePullPolicy: IfNotPresent
-  keycloakDeploymentSpec:
-    replicas: 1
-    resources:
-      requests:
-        memory: "512Mi"
-        cpu: "250m"
-      limits:
-        memory: "1Gi"
-        cpu: "500m"
-  service:
-    type: ClusterIP
+  proxy:
+    headers: xforwarded
