@@ -7,6 +7,9 @@ auth:
   username: "keycloak"
   database: "keycloak"
   existingSecret: "keycloak-postgresql"
+  secretKeys:
+    userPasswordKey: "password"
+    adminPasswordKey: "postgres-password"
   # Let Bitnami auto-generate the password
   # This will create a secret automatically
 
