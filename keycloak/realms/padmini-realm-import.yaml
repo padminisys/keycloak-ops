@@ -153,17 +153,17 @@ spec:
         serviceAccountsEnabled: false
         authorizationServicesEnabled: false
         
-        # Redirect URIs for Next.js app
+        # Fixed redirect URIs for Next.js NextAuth.js
         redirectUris:
-          - "http://localhost:3000/*"
-          - "https://ppcs.padmini.systems/*"
-          - "https://app.padmini.systems/*"
+          - "http://localhost:3000/api/auth/callback/keycloak"
+          - "https://ppcs.padmini.systems/api/auth/callback/keycloak"
+          - "https://app.padmini.systems/api/auth/callback/keycloak"
         webOrigins:
           - "http://localhost:3000"
           - "https://ppcs.padmini.systems"
           - "https://app.padmini.systems"
         
-        # Protocol mappers for custom claims
+        # Essential OIDC protocol mappers
         protocolMappers:
           - name: "mobile-mapper"
             protocol: "openid-connect"
@@ -172,17 +172,6 @@ spec:
             config:
               "user.attribute": "mobile"
               "claim.name": "mobile"
-              "jsonType.label": "String"
-              "id.token.claim": "true"
-              "access.token.claim": "true"
-              "userinfo.token.claim": "true"
-          - name: "sub-mapper"
-            protocol: "openid-connect"
-            protocolMapper: "oidc-usermodel-attribute-mapper"
-            consentRequired: false
-            config:
-              "user.attribute": "id"
-              "claim.name": "sub"
               "jsonType.label": "String"
               "id.token.claim": "true"
               "access.token.claim": "true"
@@ -209,6 +198,39 @@ spec:
               "id.token.claim": "true"
               "access.token.claim": "true"
               "userinfo.token.claim": "true"
+          - name: "email-verified-mapper"
+            protocol: "openid-connect"
+            protocolMapper: "oidc-usermodel-property-mapper"
+            consentRequired: false
+            config:
+              "user.attribute": "emailVerified"
+              "claim.name": "email_verified"
+              "jsonType.label": "boolean"
+              "id.token.claim": "true"
+              "access.token.claim": "true"
+              "userinfo.token.claim": "true"
+          - name: "given-name-mapper"
+            protocol: "openid-connect"
+            protocolMapper: "oidc-usermodel-property-mapper"
+            consentRequired: false
+            config:
+              "user.attribute": "firstName"
+              "claim.name": "given_name"
+              "jsonType.label": "String"
+              "id.token.claim": "true"
+              "access.token.claim": "true"
+              "userinfo.token.claim": "true"
+          - name: "family-name-mapper"
+            protocol: "openid-connect"
+            protocolMapper: "oidc-usermodel-property-mapper"
+            consentRequired: false
+            config:
+              "user.attribute": "lastName"
+              "claim.name": "family_name"
+              "jsonType.label": "String"
+              "id.token.claim": "true"
+              "access.token.claim": "true"
+              "userinfo.token.claim": "true"
           - name: "full-name-mapper"
             protocol: "openid-connect"
             protocolMapper: "oidc-full-name-mapper"
@@ -218,18 +240,20 @@ spec:
               "access.token.claim": "true"
               "userinfo.token.claim": "true"
         
-        # Default client scopes
+        # FIXED: Essential OIDC scopes for NextAuth.js
         defaultClientScopes:
+          - "openid"
+          - "profile"
+          - "email"
           - "web-origins"
           - "acr"
-          - "profile"
           - "roles"
-          - "email"
         optionalClientScopes:
           - "address"
           - "phone"
           - "offline_access"
           - "microprofile-jwt"
+          - "mobile"
         
         attributes:
           "oidc.ciba.grant.enabled": "false"
@@ -350,6 +374,104 @@ spec:
     
     # Client scopes
     clientScopes:
+      # Essential OIDC scopes
+      - name: "openid"
+        description: "OpenID Connect built-in scope: openid"
+        protocol: "openid-connect"
+        attributes:
+          "include.in.token.scope": "true"
+          "display.on.consent.screen": "true"
+          "consent.screen.text": "OpenID Connect"
+        protocolMappers:
+          - name: "sub"
+            protocol: "openid-connect"
+            protocolMapper: "oidc-sub-mapper"
+            consentRequired: false
+            config:
+              "access.token.claim": "true"
+              "id.token.claim": "true"
+      
+      - name: "profile"
+        description: "OpenID Connect built-in scope: profile"
+        protocol: "openid-connect"
+        attributes:
+          "include.in.token.scope": "true"
+          "display.on.consent.screen": "true"
+          "consent.screen.text": "User profile information"
+        protocolMappers:
+          - name: "username"
+            protocol: "openid-connect"
+            protocolMapper: "oidc-usermodel-property-mapper"
+            consentRequired: false
+            config:
+              "user.attribute": "username"
+              "claim.name": "preferred_username"
+              "jsonType.label": "String"
+              "id.token.claim": "true"
+              "access.token.claim": "true"
+              "userinfo.token.claim": "true"
+          - name: "given name"
+            protocol: "openid-connect"
+            protocolMapper: "oidc-usermodel-property-mapper"
+            consentRequired: false
+            config:
+              "user.attribute": "firstName"
+              "claim.name": "given_name"
+              "jsonType.label": "String"
+              "id.token.claim": "true"
+              "access.token.claim": "true"
+              "userinfo.token.claim": "true"
+          - name: "family name"
+            protocol: "openid-connect"
+            protocolMapper: "oidc-usermodel-property-mapper"
+            consentRequired: false
+            config:
+              "user.attribute": "lastName"
+              "claim.name": "family_name"
+              "jsonType.label": "String"
+              "id.token.claim": "true"
+              "access.token.claim": "true"
+              "userinfo.token.claim": "true"
+          - name: "full name"
+            protocol: "openid-connect"
+            protocolMapper: "oidc-full-name-mapper"
+            consentRequired: false
+            config:
+              "id.token.claim": "true"
+              "access.token.claim": "true"
+              "userinfo.token.claim": "true"
+      
+      - name: "email"
+        description: "OpenID Connect built-in scope: email"
+        protocol: "openid-connect"
+        attributes:
+          "include.in.token.scope": "true"
+          "display.on.consent.screen": "true"
+          "consent.screen.text": "Email address"
+        protocolMappers:
+          - name: "email"
+            protocol: "openid-connect"
+            protocolMapper: "oidc-usermodel-property-mapper"
+            consentRequired: false
+            config:
+              "user.attribute": "email"
+              "claim.name": "email"
+              "jsonType.label": "String"
+              "id.token.claim": "true"
+              "access.token.claim": "true"
+              "userinfo.token.claim": "true"
+          - name: "email verified"
+            protocol: "openid-connect"
+            protocolMapper: "oidc-usermodel-property-mapper"
+            consentRequired: false
+            config:
+              "user.attribute": "emailVerified"
+              "claim.name": "email_verified"
+              "jsonType.label": "boolean"
+              "id.token.claim": "true"
+              "access.token.claim": "true"
+              "userinfo.token.claim": "true"
+      
       - name: "mobile"
         description: "Mobile number scope"
         protocol: "openid-connect"
