@@ -6,6 +6,7 @@ metadata:
   labels:
     app.kubernetes.io/name: keycloak-realm
     app.kubernetes.io/part-of: keycloak
+    app.kubernetes.io/instance: padmini
 spec:
   project: default
   source:
