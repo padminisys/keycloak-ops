@@ -11,6 +11,38 @@ metadata:
     app.kubernetes.io/managed-by: keycloak-operator
 spec:
   keycloakCRName: padmini-keycloak
+  
+  # Placeholders for sensitive SMTP configuration from secrets
+  placeholders:
+    SMTP_HOST:
+      secret:
+        name: keycloak-smtp-secret
+        key: host
+    SMTP_PORT:
+      secret:
+        name: keycloak-smtp-secret
+        key: port
+    SMTP_AUTH:
+      secret:
+        name: keycloak-smtp-secret
+        key: auth
+    SMTP_SSL:
+      secret:
+        name: keycloak-smtp-secret
+        key: ssl
+    SMTP_STARTTLS:
+      secret:
+        name: keycloak-smtp-secret
+        key: starttls
+    SMTP_USER:
+      secret:
+        name: keycloak-smtp-secret
+        key: user
+    SMTP_PASSWORD:
+      secret:
+        name: keycloak-smtp-secret
+        key: password
+  
   realm:
     id: padmini-systems
     realm: padmini-systems
@@ -472,14 +504,14 @@ spec:
             priority: 20
             userSetupAllowed: false
     
-    # Email configuration (you'll need to configure SMTP)
+    # Email configuration using secret placeholders
     smtpServer:
-      host: ""
-      port: ""
-      auth: true
-      ssl: true
-      starttls: false
-      from: "noreply@padmini.systems"
+      host: "${SMTP_HOST}"
+      port: "${SMTP_PORT}"
+      auth: "${SMTP_AUTH}"
+      ssl: "${SMTP_SSL}"
+      starttls: "${SMTP_STARTTLS}"
+      from: "khushisoftwareindia@gmail.com"
       fromDisplayName: "Padmini Systems"
-      user: ""
-      password: ""
+      user: "${SMTP_USER}"
+      password: "${SMTP_PASSWORD}"

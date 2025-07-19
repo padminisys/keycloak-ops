@@ -7,6 +7,8 @@ metadata:
 
 resources:
   - padmini-realm-import.yaml
+  # Note: keycloak-smtp-secret-template.yaml is a template file
+  # Create the actual secret manually or via CI/CD with real credentials
 
 commonLabels:
   app.kubernetes.io/part-of: keycloak

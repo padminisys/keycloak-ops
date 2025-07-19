@@ -1,1 +1,8 @@
 secret.txt
+
+# SMTP and other sensitive configuration files
+*secret*.yaml
+!*secret*-template.yaml
+smtp-config.yaml
+*.env.local
+.env

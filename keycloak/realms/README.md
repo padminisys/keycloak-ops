@@ -4,7 +4,17 @@
 
 This configuration sets up a complete Keycloak realm for Padmini Systems with two clients:
 - **PPCS Web Application**: Public client for Next.js frontend
-- **ASM Microservices**: Confidential client for Quarkus backend services
+- **ASM Microservices**: Confidential clien### 2. Update Client Secret
+⚠️ **IMPORTANT**: Change the default client secret for `asm-microservices`
+
+1. Login to Keycloak Admin Console: `https://iam.padmini.systems`
+2. Navigate to Realm: `padmini-systems`
+3. Go to Clients → `asm-microservices`
+4. Go to Credentials tab
+5. Generate new secret or set custom secret
+6. Update your Quarkus application configuration
+
+### 3. Test Email Verificationd services
 
 ## Realm Configuration
 
@@ -206,7 +216,55 @@ kubectl describe keycloakrealmimport padmini-realm-import -n keycloak
 
 ## Post-Deployment Configuration
 
-### 1. Update Client Secret
+### 1. Configure SMTP for Email Verification
+
+**Important**: SMTP credentials are stored in Kubernetes secrets, NOT in git.
+
+#### Option A: Automated Setup (Recommended)
+```bash
+# Run the interactive SMTP setup script
+./scripts/setup-smtp.sh
+```
+
+#### Option B: Manual Setup
+```bash
+# Create SMTP secret manually
+kubectl create secret generic keycloak-smtp-secret \
+  --namespace=keycloak \
+  --from-literal=host="smtp.gmail.com" \
+  --from-literal=port="587" \
+  --from-literal=auth="true" \
+  --from-literal=ssl="false" \
+  --from-literal=starttls="true" \
+  --from-literal=user="your-email@gmail.com" \
+  --from-literal=password="your-app-password"
+
+# Add labels
+kubectl label secret keycloak-smtp-secret -n keycloak \
+  app.kubernetes.io/name=keycloak-smtp \
+  app.kubernetes.io/part-of=keycloak \
+  app.kubernetes.io/component=smtp-config
+```
+
+#### Common SMTP Configurations
+
+**Gmail (App Password Required)**:
+- Host: `smtp.gmail.com`
+- Port: `587` 
+- SSL: `false`, STARTTLS: `true`
+- Note: Use App Password, not regular password
+
+**Outlook/Hotmail**:
+- Host: `smtp-mail.outlook.com`
+- Port: `587`
+- SSL: `false`, STARTTLS: `true`
+
+**AWS SES**:
+- Host: `email-smtp.us-east-1.amazonaws.com`
+- Port: `587`
+- SSL: `false`, STARTTLS: `true`
+
+### 2. Update Client Secret
 ⚠️ **IMPORTANT**: Change the default client secret for `asm-microservices`
 
 1. Login to Keycloak Admin Console: `https://iam.padmini.systems`
@@ -225,7 +283,7 @@ kubectl describe keycloakrealmimport padmini-realm-import -n keycloak
    - From: `noreply@padmini.systems`
    - Username/Password: SMTP credentials
 
-### 3. Test User Registration
+### 3. Test Email Verification
 1. Visit your Next.js application
 2. Click "Sign Up"
 3. Fill all required fields including mobile number
