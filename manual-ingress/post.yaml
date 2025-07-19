@@ -1,0 +1,48 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  annotations:
+    javaoperatorsdk.io/previous: 6e87b35a-6956-4aa8-bb9e-f41358fd3a41
+    nginx.ingress.kubernetes.io/backend-protocol: HTTPS
+    nginx.ingress.kubernetes.io/ssl-passthrough: "true"
+    route.openshift.io/termination: passthrough
+  creationTimestamp: "2025-07-19T09:50:45Z"
+  generation: 1
+  labels:
+    app: keycloak
+    app.kubernetes.io/instance: padmini-keycloak
+    app.kubernetes.io/managed-by: keycloak-operator
+  name: padmini-keycloak-ingress
+  namespace: keycloak
+  ownerReferences:
+  - apiVersion: k8s.keycloak.org/v2alpha1
+    kind: Keycloak
+    name: padmini-keycloak
+    uid: e4414b5e-1fde-4604-8a3d-275e7df6c3a9
+  resourceVersion: "1376668"
+  uid: 7d417735-525a-442f-aa94-56f09022f181
+spec:
+  defaultBackend:
+    service:
+      name: padmini-keycloak-service
+      port:
+        name: https
+  ingressClassName: nginx
+  rules:
+  - host: iam.padmini.systems
+    http:
+      paths:
+      - backend:
+          service:
+            name: padmini-keycloak-service
+            port:
+              name: https
+        pathType: ImplementationSpecific
+  tls:
+  - hosts:
+    - iam.padmini.systems
+    secretName: keycloak-tls-secret        
+status:
+  loadBalancer:
+    ingress:
+    - ip: 185.228.136.185

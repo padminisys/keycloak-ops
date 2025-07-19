@@ -1,0 +1,10 @@
+as per this open issue - https://github.com/keycloak/keycloak/issues/34777
+
+pre is generated ingress 
+
+post and pre would have below difference , patch manually ingress as below - 
+
+  tls:
+  - hosts:
+    - iam.padmini.systems
+    secretName: keycloak-tls-secret    
