@@ -30,24 +30,55 @@ keycloak-ops/
 │       └── deploy-argocd-app.yaml      # GitHub Actions workflow for Keycloak operator
 ├── keycloak-operator/
 │   └── kustomization.yaml              # Kustomize config with remote Keycloak resources
+├── keycloak/
+│   ├── instances/
+│   │   └── production-keycloak.yaml    # Keycloak instance configuration
+│   └── realms/
+│       ├── padmini-realm-import.yaml   # Padmini Systems realm configuration
+│       ├── kustomization.yaml          # Realm resources management
+│       └── README.md                   # Realm setup documentation
 ├── argocd-apps/
-│   └── keycloak-operator-app.yaml     # ArgoCD application manifest
+│   ├── keycloak-operator-app.yaml      # ArgoCD application for operator
+│   ├── keycloak-instance-app.yaml      # ArgoCD application for instance
+│   └── keycloak-realm-app.yaml         # ArgoCD application for realm
+├── docs/
+│   ├── nextjs-integration.md           # Next.js integration guide
+│   └── quarkus-integration.md          # Quarkus integration guide
+├── scripts/
+│   └── setup-realm.sh                  # Automated realm setup script
 └── README.md                           # This documentation
 ```
 
 ### **Current Implementation Status**
 - ✅ **Keycloak Operator**: Deployed using Kustomize with remote resources
+- ✅ **Keycloak Instance**: Production-ready instance with PostgreSQL backend
+- ✅ **Padmini Systems Realm**: Complete realm with two clients configured
 - ✅ **ArgoCD Integration**: Automated deployment via ArgoCD
 - ✅ **GitOps Workflow**: GitHub Actions with kubeconfig from secrets
-- ✅ **Kustomize Approach**: Uses official Keycloak manifests (v26.3.1)
+- ✅ **Integration Guides**: Complete Next.js and Quarkus documentation
 
 ## 🚀 **Planned Enterprise Architecture**
 
-### **Phase 1: Infrastructure Foundation** (Current - In Progress)
+### **Phase 1: Infrastructure Foundation** ✅ **COMPLETED**
 - [x] Keycloak Operator deployment
-- [ ] PostgreSQL database cluster
-- [ ] Certificate management (cert-manager)
-- [ ] Monitoring and logging stack
+- [x] Keycloak instance with PostgreSQL backend
+- [x] Certificate management (TLS certificates)
+- [x] Complete realm configuration for Padmini Systems
+
+### **Phase 2: Application Integration** 🔄 **IN PROGRESS**
+- [x] Padmini Systems realm with user registration
+- [x] PPCS Web Application client (Next.js)
+- [x] ASM Microservices client (Quarkus)
+- [x] Custom user attributes (mobile number)
+- [x] Username/email login support
+- [ ] SMTP configuration for email verification
+- [ ] Client secret rotation
+
+### **Phase 3: Business Applications** 📋 **PLANNED**
+- [ ] Next.js web application deployment
+- [ ] Quarkus microservices deployment
+- [ ] User onboarding flow implementation
+- [ ] Business database integration
 
 ### **Phase 2: Keycloak Core Setup**
 - [ ] padmini Keycloak instance
@@ -149,12 +180,51 @@ kubectl get crd | grep keycloak
 kubectl get keycloaks -n keycloak
 ```
 
-## 🔒 **Security Considerations**
+## � **Quick Deployment Guide**
 
-- **Network Security**: All traffic encrypted with TLS (planned)
-- **Secret Management**: Kubernetes secrets with encryption (planned)
+### **Deploy Padmini Systems Realm**
+
+1. **Automatic Deployment (Recommended)**:
+   ```bash
+   # Run the setup script
+   ./scripts/setup-realm.sh
+   ```
+
+2. **Manual Deployment**:
+   ```bash
+   # Apply realm configuration
+   kubectl apply -f keycloak/realms/padmini-realm-import.yaml
+   
+   # Or deploy via ArgoCD
+   kubectl apply -f argocd-apps/keycloak-realm-app.yaml
+   ```
+
+3. **Verify Deployment**:
+   ```bash
+   kubectl get keycloakrealmimport -n keycloak
+   kubectl describe keycloakrealmimport padmini-realm-import -n keycloak
+   ```
+
+### **Post-Deployment Configuration**
+
+1. **Access Keycloak Admin Console**: https://iam.padmini.systems
+2. **Change Client Secret**: Update `asm-microservices` client secret
+3. **Configure SMTP**: Set up email verification settings
+4. **Test Registration**: Create a test user and verify email flow
+
+### **Integration Setup**
+
+- **Next.js**: See `docs/nextjs-integration.md`
+- **Quarkus**: See `docs/quarkus-integration.md`
+- **Realm Details**: See `keycloak/realms/README.md`
+
+## �🔒 **Security Considerations**
+
+- **Network Security**: All traffic encrypted with TLS
+- **Secret Management**: Kubernetes secrets with client credentials
 - **Access Control**: RBAC for all Kubernetes resources
-- **Audit Logging**: Comprehensive audit trails (planned)
+- **Email Verification**: Required for user registration
+- **Brute Force Protection**: Enabled with configurable limits
 
 ## 🚧 **Future Enhancements**
 

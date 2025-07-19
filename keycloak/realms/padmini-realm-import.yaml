@@ -1,0 +1,485 @@
+apiVersion: k8s.keycloak.org/v2alpha1
+kind: KeycloakRealmImport
+metadata:
+  name: padmini-realm-import
+  namespace: keycloak
+  labels:
+    app.kubernetes.io/name: keycloak-realm
+    app.kubernetes.io/instance: padmini-realm
+    app.kubernetes.io/component: realm-import
+    app.kubernetes.io/part-of: keycloak
+    app.kubernetes.io/managed-by: keycloak-operator
+spec:
+  keycloakCRName: padmini-keycloak
+  realm:
+    id: padmini-systems
+    realm: padmini-systems
+    displayName: "Padmini Systems"
+    displayNameHtml: "<div class=\"kc-logo-text\"><span>Padmini Systems</span></div>"
+    enabled: true
+    
+    # Security settings
+    sslRequired: "external"
+    registrationAllowed: true
+    registrationEmailAsUsername: false
+    rememberMe: true
+    verifyEmail: true
+    loginWithEmailAllowed: true
+    duplicateEmailsAllowed: false
+    resetPasswordAllowed: true
+    editUsernameAllowed: false
+    bruteForceProtected: true
+    permanentLockout: false
+    maxFailureWaitSeconds: 900
+    minimumQuickLoginWaitSeconds: 60
+    waitIncrementSeconds: 60
+    quickLoginCheckMilliSeconds: 1000
+    maxDeltaTimeSeconds: 43200
+    failureFactor: 30
+    
+    # Login settings
+    loginTheme: "keycloak"
+    accountTheme: "keycloak.v2"
+    adminTheme: "keycloak.v2"
+    emailTheme: "keycloak"
+    
+    # Token settings
+    accessTokenLifespan: 300
+    accessTokenLifespanForImplicitFlow: 900
+    ssoSessionIdleTimeout: 1800
+    ssoSessionMaxLifespan: 36000
+    offlineSessionIdleTimeout: 2592000
+    offlineSessionMaxLifespan: 5184000
+    accessCodeLifespan: 60
+    accessCodeLifespanUserAction: 300
+    accessCodeLifespanLogin: 1800
+    actionTokenGeneratedByAdminLifespan: 43200
+    actionTokenGeneratedByUserLifespan: 300
+    
+    # Internationalization
+    internationalizationEnabled: true
+    supportedLocales: ["en", "hi"]
+    defaultLocale: "en"
+    
+    # Required actions
+    requiredActions:
+      - alias: "VERIFY_EMAIL"
+        name: "Verify Email"
+        providerId: "VERIFY_EMAIL"
+        enabled: true
+        defaultAction: true
+        priority: 50
+        config: {}
+      - alias: "UPDATE_PASSWORD"
+        name: "Update Password"
+        providerId: "UPDATE_PASSWORD"
+        enabled: true
+        defaultAction: false
+        priority: 30
+        config: {}
+      - alias: "CONFIGURE_TOTP"
+        name: "Configure OTP"
+        providerId: "CONFIGURE_TOTP"
+        enabled: true
+        defaultAction: false
+        priority: 10
+        config: {}
+      - alias: "UPDATE_PROFILE"
+        name: "Update Profile"
+        providerId: "UPDATE_PROFILE"
+        enabled: true
+        defaultAction: false
+        priority: 40
+        config: {}
+    
+    # User attributes configuration
+    attributes:
+      userProfileEnabled: "true"
+      
+    # User profile configuration
+    userProfile:
+      attributes:
+        - name: "username"
+          displayName: "${username}"
+          validations:
+            length:
+              min: 3
+              max: 255
+            pattern:
+              pattern: "^[a-zA-Z0-9._-]*$"
+          annotations: {}
+          required:
+            roles: ["user"]
+          permissions:
+            view: ["admin", "user"]
+            edit: ["admin", "user"]
+        - name: "email"
+          displayName: "${email}"
+          validations:
+            email: {}
+            length:
+              max: 255
+          annotations: {}
+          required:
+            roles: ["user"]
+          permissions:
+            view: ["admin", "user"]
+            edit: ["admin", "user"]
+        - name: "firstName"
+          displayName: "${firstName}"
+          validations:
+            length:
+              max: 255
+          annotations: {}
+          required:
+            roles: ["user"]
+          permissions:
+            view: ["admin", "user"]
+            edit: ["admin", "user"]
+        - name: "lastName"
+          displayName: "${lastName}"
+          validations:
+            length:
+              max: 255
+          annotations: {}
+          required:
+            roles: ["user"]
+          permissions:
+            view: ["admin", "user"]
+            edit: ["admin", "user"]
+        - name: "mobile"
+          displayName: "Mobile Number"
+          validations:
+            length:
+              min: 10
+              max: 15
+            pattern:
+              pattern: "^[+]?[1-9]\\d{9,14}$"
+              error-message: "Please enter a valid mobile number with country code (e.g., +919876543210)"
+          annotations:
+            inputType: "phone"
+          required:
+            roles: ["user"]
+          permissions:
+            view: ["admin", "user"]
+            edit: ["admin", "user"]
+      groups:
+        - name: "user-metadata"
+          displayHeader: "User Information"
+          displayDescription: "Basic user information"
+          attributes:
+            - "firstName"
+            - "lastName"
+            - "email"
+            - "mobile"
+        - name: "account-security"
+          displayHeader: "Account Security"
+          displayDescription: "Login credentials"
+          attributes:
+            - "username"
+    
+    # Clients configuration
+    clients:
+      # Public client for Next.js web application
+      - clientId: "ppcs-web-app"
+        name: "PPCS Web Application"
+        description: "Padmini Private Cloud Service Web Application"
+        enabled: true
+        clientAuthenticatorType: "client-secret"
+        publicClient: true
+        standardFlowEnabled: true
+        implicitFlowEnabled: false
+        directAccessGrantsEnabled: true
+        serviceAccountsEnabled: false
+        authorizationServicesEnabled: false
+        
+        # Redirect URIs for Next.js app
+        redirectUris:
+          - "http://localhost:3000/*"
+          - "https://ppcs.padmini.systems/*"
+          - "https://app.padmini.systems/*"
+        webOrigins:
+          - "http://localhost:3000"
+          - "https://ppcs.padmini.systems"
+          - "https://app.padmini.systems"
+        
+        # Protocol mappers for custom claims
+        protocolMappers:
+          - name: "mobile-mapper"
+            protocol: "openid-connect"
+            protocolMapper: "oidc-usermodel-attribute-mapper"
+            consentRequired: false
+            config:
+              "user.attribute": "mobile"
+              "claim.name": "mobile"
+              "jsonType.label": "String"
+              "id.token.claim": "true"
+              "access.token.claim": "true"
+              "userinfo.token.claim": "true"
+          - name: "sub-mapper"
+            protocol: "openid-connect"
+            protocolMapper: "oidc-usermodel-attribute-mapper"
+            consentRequired: false
+            config:
+              "user.attribute": "id"
+              "claim.name": "sub"
+              "jsonType.label": "String"
+              "id.token.claim": "true"
+              "access.token.claim": "true"
+              "userinfo.token.claim": "true"
+          - name: "username-mapper"
+            protocol: "openid-connect"
+            protocolMapper: "oidc-usermodel-property-mapper"
+            consentRequired: false
+            config:
+              "user.attribute": "username"
+              "claim.name": "preferred_username"
+              "jsonType.label": "String"
+              "id.token.claim": "true"
+              "access.token.claim": "true"
+              "userinfo.token.claim": "true"
+          - name: "email-mapper"
+            protocol: "openid-connect"
+            protocolMapper: "oidc-usermodel-property-mapper"
+            consentRequired: false
+            config:
+              "user.attribute": "email"
+              "claim.name": "email"
+              "jsonType.label": "String"
+              "id.token.claim": "true"
+              "access.token.claim": "true"
+              "userinfo.token.claim": "true"
+          - name: "full-name-mapper"
+            protocol: "openid-connect"
+            protocolMapper: "oidc-full-name-mapper"
+            consentRequired: false
+            config:
+              "id.token.claim": "true"
+              "access.token.claim": "true"
+              "userinfo.token.claim": "true"
+        
+        # Default client scopes
+        defaultClientScopes:
+          - "web-origins"
+          - "acr"
+          - "profile"
+          - "roles"
+          - "email"
+        optionalClientScopes:
+          - "address"
+          - "phone"
+          - "offline_access"
+          - "microprofile-jwt"
+        
+        attributes:
+          "oidc.ciba.grant.enabled": "false"
+          "oauth2.device.authorization.grant.enabled": "false"
+          "backchannel.logout.session.required": "true"
+          "backchannel.logout.revoke.offline.tokens": "false"
+          
+      # Confidential client for ASM Quarkus microservices
+      - clientId: "asm-microservices"
+        name: "ASM Microservices"
+        description: "Authentication Service Manager and related microservices"
+        enabled: true
+        clientAuthenticatorType: "client-secret"
+        secret: "asm-microservices-secret-change-me"
+        publicClient: false
+        standardFlowEnabled: true
+        implicitFlowEnabled: false
+        directAccessGrantsEnabled: true
+        serviceAccountsEnabled: true
+        authorizationServicesEnabled: true
+        bearerOnly: false
+        
+        # Service URLs
+        rootUrl: "https://api.padmini.systems"
+        adminUrl: "https://api.padmini.systems"
+        baseUrl: "/"
+        
+        # Valid redirect URIs
+        redirectUris:
+          - "https://api.padmini.systems/*"
+          - "http://localhost:8080/*"
+        webOrigins:
+          - "https://api.padmini.systems"
+          - "http://localhost:8080"
+        
+        # Protocol mappers for microservices
+        protocolMappers:
+          - name: "mobile-mapper"
+            protocol: "openid-connect"
+            protocolMapper: "oidc-usermodel-attribute-mapper"
+            consentRequired: false
+            config:
+              "user.attribute": "mobile"
+              "claim.name": "mobile"
+              "jsonType.label": "String"
+              "id.token.claim": "true"
+              "access.token.claim": "true"
+              "userinfo.token.claim": "true"
+          - name: "client-roles-mapper"
+            protocol: "openid-connect"
+            protocolMapper: "oidc-usermodel-client-role-mapper"
+            consentRequired: false
+            config:
+              "user.attribute": "foo"
+              "claim.name": "resource_access.${client_id}.roles"
+              "jsonType.label": "String"
+              "multivalued": "true"
+              "id.token.claim": "true"
+              "access.token.claim": "true"
+          - name: "audience-mapper"
+            protocol: "openid-connect"
+            protocolMapper: "oidc-audience-mapper"
+            consentRequired: false
+            config:
+              "included.client.audience": "asm-microservices"
+              "id.token.claim": "false"
+              "access.token.claim": "true"
+        
+        # Client roles for microservices
+        roles:
+          - name: "user"
+            description: "Standard user role"
+          - name: "admin"
+            description: "Administrator role"
+          - name: "api-access"
+            description: "API access role"
+            
+        # Default client scopes
+        defaultClientScopes:
+          - "web-origins"
+          - "acr"
+          - "profile"
+          - "roles"
+          - "email"
+        optionalClientScopes:
+          - "address"
+          - "phone"
+          - "offline_access"
+          - "microprofile-jwt"
+        
+        attributes:
+          "oidc.ciba.grant.enabled": "false"
+          "oauth2.device.authorization.grant.enabled": "false"
+          "backchannel.logout.session.required": "true"
+          "backchannel.logout.revoke.offline.tokens": "false"
+          "use.refresh.tokens": "true"
+          "exclude.session.state.from.auth.response": "false"
+    
+    # Default roles
+    roles:
+      realm:
+        - name: "user"
+          description: "User role"
+          composite: false
+        - name: "admin"
+          description: "Administrator role"
+          composite: false
+        - name: "offline_access"
+          description: "Offline access"
+          composite: false
+    
+    # Default groups
+    groups:
+      - name: "users"
+        path: "/users"
+        attributes: {}
+        realmRoles:
+          - "user"
+        subGroups: []
+      - name: "admins"
+        path: "/admins"
+        attributes: {}
+        realmRoles:
+          - "admin"
+          - "user"
+        subGroups: []
+    
+    # Client scopes
+    clientScopes:
+      - name: "mobile"
+        description: "Mobile number scope"
+        protocol: "openid-connect"
+        attributes:
+          "include.in.token.scope": "true"
+          "display.on.consent.screen": "true"
+          "consent.screen.text": "Mobile number"
+        protocolMappers:
+          - name: "mobile"
+            protocol: "openid-connect"
+            protocolMapper: "oidc-usermodel-attribute-mapper"
+            consentRequired: false
+            config:
+              "user.attribute": "mobile"
+              "claim.name": "mobile"
+              "jsonType.label": "String"
+              "id.token.claim": "true"
+              "access.token.claim": "true"
+              "userinfo.token.claim": "true"
+    
+    # Authentication flows
+    authenticationFlows:
+      - alias: "username-or-email-flow"
+        description: "Flow for username or email authentication"
+        providerId: "basic-flow"
+        topLevel: true
+        builtIn: false
+        authenticationExecutions:
+          - authenticator: "auth-cookie"
+            requirement: "ALTERNATIVE"
+            priority: 10
+            userSetupAllowed: false
+          - authenticator: "auth-spnego"
+            requirement: "DISABLED"
+            priority: 20
+            userSetupAllowed: false
+          - authenticator: "identity-provider-redirector"
+            requirement: "ALTERNATIVE"
+            priority: 25
+            userSetupAllowed: false
+          - flowAlias: "username-or-email-forms"
+            requirement: "ALTERNATIVE"
+            priority: 30
+            userSetupAllowed: false
+      - alias: "username-or-email-forms"
+        description: "Username or email, password, otp and other auth forms."
+        providerId: "basic-flow"
+        topLevel: false
+        builtIn: false
+        authenticationExecutions:
+          - authenticator: "auth-username-password-form"
+            requirement: "REQUIRED"
+            priority: 10
+            userSetupAllowed: false
+          - flowAlias: "username-or-email-browser-conditional-otp"
+            requirement: "CONDITIONAL"
+            priority: 20
+            userSetupAllowed: false
+      - alias: "username-or-email-browser-conditional-otp"
+        description: "Flow to determine if the OTP is required for the authentication"
+        providerId: "basic-flow"
+        topLevel: false
+        builtIn: false
+        authenticationExecutions:
+          - authenticator: "conditional-user-configured"
+            requirement: "REQUIRED"
+            priority: 10
+            userSetupAllowed: false
+          - authenticator: "auth-otp-form"
+            requirement: "REQUIRED"
+            priority: 20
+            userSetupAllowed: false
+    
+    # Email configuration (you'll need to configure SMTP)
+    smtpServer:
+      host: ""
+      port: ""
+      auth: true
+      ssl: true
+      starttls: false
+      from: "noreply@padmini.systems"
+      fromDisplayName: "Padmini Systems"
+      user: ""
+      password: ""
