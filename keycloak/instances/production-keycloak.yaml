@@ -21,6 +21,10 @@ spec:
     port: 5432
   ingress:
     enabled: true
+    tls:
+      - hosts:
+          - iam.padmini.systems
+        secretName: keycloak-tls-secret
     className: nginx
     annotations:
       nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
