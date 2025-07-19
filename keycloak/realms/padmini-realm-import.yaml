@@ -372,16 +372,15 @@ spec:
           - "user"
         subGroups: []
     
-    # Client scopes
+    # Client scopes - CRD compatible configuration
     clientScopes:
-      # Essential OIDC scopes
+      # Essential OIDC scope - openid
       - name: "openid"
         description: "OpenID Connect built-in scope: openid"
         protocol: "openid-connect"
         attributes:
           "include.in.token.scope": "true"
-          "display.on.consent.screen": "true"
-          "consent.screen.text": "OpenID Connect"
+          "display.on.consent.screen": "false"
         protocolMappers:
           - name: "sub"
             protocol: "openid-connect"
@@ -391,6 +390,7 @@ spec:
               "access.token.claim": "true"
               "id.token.claim": "true"
       
+      # Profile scope with essential user info
       - name: "profile"
         description: "OpenID Connect built-in scope: profile"
         protocol: "openid-connect"
@@ -441,6 +441,7 @@ spec:
               "access.token.claim": "true"
               "userinfo.token.claim": "true"
       
+      # Email scope
       - name: "email"
         description: "OpenID Connect built-in scope: email"
         protocol: "openid-connect"
@@ -472,6 +473,7 @@ spec:
               "access.token.claim": "true"
               "userinfo.token.claim": "true"
       
+      # Custom mobile scope
       - name: "mobile"
         description: "Mobile number scope"
         protocol: "openid-connect"

@@ -81,16 +81,56 @@ export default NextAuth({
       if (account && profile) {
         token.mobile = profile.mobile
         token.accessToken = account.access_token
+        token.userId = profile.sub
       }
       return token
     },
     async session({ session, token }) {
       session.accessToken = token.accessToken
       session.user.mobile = token.mobile
+      session.user.id = token.userId
       return session
     }
   }
 })
+```
+
+### Troubleshooting Step-by-Step Fix
+
+**If you get "invalid_scope" error:**
+
+1. **Use only `openid` scope first** to test basic connectivity:
+   ```typescript
+   scope: "openid"
+   ```
+
+2. **Once `openid` works, gradually add scopes:**
+   ```typescript
+   scope: "openid profile"  // Test this
+   ```
+
+3. **Then add email:**
+   ```typescript
+   scope: "openid profile email"  // Test this
+   ```
+
+4. **Finally add mobile:**
+   ```typescript
+   scope: "openid profile email mobile"  // Final scope
+   ```
+
+**Expected JWT Claims after fix:**
+```json
+{
+  "sub": "user-uuid-here",
+  "preferred_username": "john.doe", 
+  "given_name": "John",
+  "family_name": "Doe",
+  "name": "John Doe",
+  "email": "john.doe@example.com",
+  "email_verified": true,
+  "mobile": "+919876543210"
+}
 ```
 
 ## 🔍 Testing URLs
