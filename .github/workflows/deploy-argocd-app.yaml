@@ -80,3 +80,9 @@ jobs:
           kubectl get pods -n keycloak -l app=keycloak
         env:
           KUBECONFIG: ./kubeconfig.yaml
+
+      - name: Apply Keycloak Realm ArgoCD Application
+        run: |
+          kubectl apply -f argocd-apps/keycloak-realm-app.yaml
+        env:
+          KUBECONFIG: ./kubeconfig.yaml          
