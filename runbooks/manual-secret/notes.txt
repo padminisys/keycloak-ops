@@ -1,0 +1,1 @@
+create a secret before deploying this argocd apps - secrets.yaml
