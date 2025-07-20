@@ -1,0 +1,26 @@
+# Padmini Systems Keycloak Admin API Configuration
+# Enterprise-grade Python dependencies
+
+# HTTP client with connection pooling and retry capabilities
+requests>=2.31.0
+
+# Kubernetes Python client for secrets integration
+kubernetes>=33.1.0
+
+# Enhanced logging and validation
+colorama>=0.4.6
+
+# JSON manipulation and validation
+jsonschema>=4.19.0
+
+# Date/time utilities
+python-dateutil>=2.8.2
+
+# Environment variable handling
+python-dotenv>=1.0.0
+
+# Retry decorators for robust API calls
+tenacity>=8.2.3
+
+# Type hints support for Python < 3.9
+typing-extensions>=4.8.0

@@ -1,0 +1,114 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: keycloak-python-config-job
+  namespace: keycloak
+  annotations:
+    argocd.argoproj.io/sync-wave: "10"  # Final step after manual verification
+  labels:
+    app.kubernetes.io/name: keycloak-python-config
+    app.kubernetes.io/component: configuration
+    app.kubernetes.io/part-of: keycloak
+    app.kubernetes.io/managed-by: argocd
+spec:
+  template:
+    metadata:
+      name: keycloak-python-config
+      labels:
+        app.kubernetes.io/name: keycloak-python-config
+        app.kubernetes.io/component: configuration
+    spec:
+      containers:
+      - name: keycloak-python-config
+        image: python:3.11-slim
+        workingDir: /app
+        command: ["/bin/bash"]
+        args:
+        - -c
+        - |
+          echo "🚀 Starting Padmini Systems Keycloak configuration..."
+          pip install --no-cache-dir -r requirements.txt
+          python main.py
+        env:
+        # Action to perform (create, destroy, validate)
+        - name: ACTION
+          value: "create"
+        # Keycloak connection details
+        - name: KEYCLOAK_URL
+          value: "http://padmini-keycloak:8080"
+        # Admin credentials from secret
+        - name: KEYCLOAK_ADMIN_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: padmini-keycloak-admin
+              key: KEYCLOAK_ADMIN_USERNAME
+        - name: KEYCLOAK_ADMIN_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: padmini-keycloak-admin
+              key: KEYCLOAK_ADMIN_PASSWORD
+        # SMTP configuration from secret
+        - name: SMTP_HOST
+          valueFrom:
+            secretKeyRef:
+              name: padmini-keycloak-smtp
+              key: SMTP_HOST
+        - name: SMTP_PORT
+          valueFrom:
+            secretKeyRef:
+              name: padmini-keycloak-smtp
+              key: SMTP_PORT
+        - name: SMTP_USER
+          valueFrom:
+            secretKeyRef:
+              name: padmini-keycloak-smtp
+              key: SMTP_USER
+        - name: SMTP_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: padmini-keycloak-smtp
+              key: SMTP_PASSWORD
+        - name: SMTP_AUTH
+          value: "true"
+        - name: SMTP_SSL
+          value: "false"
+        - name: SMTP_STARTTLS
+          value: "true"
+        volumeMounts:
+        - name: python-executor
+          mountPath: /app
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "200m"
+          limits:
+            memory: "1Gi"
+            cpu: "1000m"
+      volumes:
+      - name: python-executor
+        configMap:
+          name: keycloak-python-executor
+      restartPolicy: OnFailure
+      # Ensure job runs after Keycloak is ready
+      initContainers:
+      - name: wait-for-keycloak
+        image: curlimages/curl:8.4.0
+        command: ["/bin/sh"]
+        args:
+        - -c
+        - |
+          echo "⏳ Waiting for Keycloak service to be ready..."
+          until curl -s http://padmini-keycloak:8080/health/ready >/dev/null 2>&1; do
+            echo "Keycloak not ready, waiting..."
+            sleep 10
+          done
+          echo "✅ Keycloak is ready!"
+          
+          # Additional check for admin console
+          until curl -s http://padmini-keycloak:8080/admin/ >/dev/null 2>&1; do
+            echo "Admin console not ready, waiting..."
+            sleep 5
+          done
+          echo "✅ Admin console is ready!"
+  backoffLimit: 3
+  ttlSecondsAfterFinished: 86400  # Keep job for 24 hours for debugging

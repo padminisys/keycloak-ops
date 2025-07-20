@@ -138,79 +138,79 @@ jobs:
       # =============================================================================
       # STEP 6: MANUAL HTTPS CONFIGURATION - INSTRUCTIONS ONLY
       # =============================================================================
-      # - name: "STEP 6: Manual HTTPS Configuration Instructions"
-      #   run: |
-      #     echo "🌐 STEP 6: Manual HTTPS Configuration Required"
-      #     echo "=============================================="
-      #     echo ""
-      #     echo "CRITICAL MANUAL STEPS REQUIRED:"
-      #     echo "1. Configure ingress/load balancer for iam.padmini.systems"
-      #     echo "2. Ensure HTTPS traffic reaches Keycloak pods"
-      #     echo "3. Test access: curl -k https://iam.padmini.systems/realms/master"
-      #     echo "4. Verify Admin Console: https://iam.padmini.systems/admin"
-      #     echo ""
-      #     echo "✅ Once HTTPS is working, uncomment next step and commit!"
+      - name: "STEP 6: Manual HTTPS Configuration Instructions"
+        run: |
+           echo "🌐 STEP 6: Manual HTTPS Configuration Required"
+           echo "=============================================="
+           echo ""
+           echo "CRITICAL MANUAL STEPS REQUIRED:"
+           echo "1. Configure ingress/load balancer for iam.padmini.systems"
+           echo "2. Ensure HTTPS traffic reaches Keycloak pods"
+           echo "3. Test access: curl -k https://iam.padmini.systems/realms/master"
+           echo "4. Verify Admin Console: https://iam.padmini.systems/admin"
+           echo ""
+           echo "✅ Once HTTPS is working, uncomment next step and commit!"
 
       # =============================================================================
       # STEP 7: MANUAL ADMIN SETUP - INSTRUCTIONS ONLY
       # =============================================================================
-      # - name: "STEP 7: Manual Admin Setup Instructions"
-      #   run: |
-      #     echo "👤 STEP 7: Manual Admin User Setup Required"
-      #     echo "=========================================="
-      #     echo ""
-      #     echo "MANUAL STEPS REQUIRED:"
-      #     echo "1. Access: https://iam.padmini.systems/admin"
-      #     echo "2. Login with temporary admin credentials"
-      #     echo "3. Create permanent admin user 'ramanuj'"
-      #     echo "4. Set secure password: 'rbd@6321P'"
-      #     echo "5. Disable temporary admin account"
-      #     echo ""
-      #     echo "✅ Once admin user is ready, create admin secret and uncomment next step!"
+      - name: "STEP 7: Manual Admin Setup Instructions"
+        run: |
+           echo "👤 STEP 7: Manual Admin User Setup Required"
+           echo "=========================================="
+           echo ""
+           echo "MANUAL STEPS REQUIRED:"
+           echo "1. Access: https://iam.padmini.systems/admin"
+           echo "2. Login with temporary admin credentials"
+           echo "3. Create permanent admin user 'ramanuj'"
+           echo "4. Set secure password: 'XXXXXXXXX'"
+           echo "5. Disable temporary admin account"
+           echo ""
+           echo "✅ Once admin user is ready, create admin secret and uncomment next step!"
 
       # =============================================================================
       # STEP 8: VERIFY ADMIN SECRET - COMMENTED OUT
       # =============================================================================
-      # - name: "STEP 8: Verify Admin Secret for Configuration Job"
-      #   run: |
-      #     echo "🔐 STEP 8: Verifying Admin Secret..."
-      #     echo "===================================="
-      #     echo ""
-      #     echo "Checking for Keycloak admin secret..."
-      #     
-      #     if kubectl get secret padmini-keycloak-admin -n keycloak >/dev/null 2>&1; then
-      #       echo "✅ Admin secret found"
-      #     else
-      #       echo "❌ Admin secret NOT found"
-      #       echo ""
-      #       echo "Please create admin secret:"
-      #       echo "kubectl create secret generic padmini-keycloak-admin \\"
-      #       echo "  --from-literal=KEYCLOAK_ADMIN_USERNAME=ramanuj \\"
-      #       echo "  --from-literal=KEYCLOAK_ADMIN_PASSWORD='rbd@6321P' \\"
-      #       echo "  -n keycloak"
-      #       exit 1
-      #     fi
-      #     echo ""
-      #     echo "✅ All secrets ready for configuration job!"
-      #   env:
-      #     KUBECONFIG: ./kubeconfig.yaml
+      - name: "STEP 8: Verify Admin Secret for Configuration Job"
+        run: |
+           echo "🔐 STEP 8: Verifying Admin Secret..."
+           echo "===================================="
+           echo ""
+           echo "Checking for Keycloak admin secret..."
+           
+           if kubectl get secret padmini-keycloak-admin -n keycloak >/dev/null 2>&1; then
+             echo "✅ Admin secret found"
+           else
+             echo "❌ Admin secret NOT found"
+             echo ""
+             echo "Please create admin secret:"
+             echo "kubectl create secret generic padmini-keycloak-admin \\"
+             echo "  --from-literal=KEYCLOAK_ADMIN_USERNAME=ramanuj \\"
+             echo "  --from-literal=KEYCLOAK_ADMIN_PASSWORD='XXXXXXXXX' \\"
+             echo "  -n keycloak"
+             exit 1
+           fi
+           echo ""
+           echo "✅ All secrets ready for configuration job!"
+        env:
+           KUBECONFIG: ./kubeconfig.yaml
 
       # =============================================================================
       # STEP 9: DEPLOY ADMIN API CONFIGURATION JOB (Sync Wave 10) - COMMENTED OUT
       # =============================================================================
-      # - name: "STEP 9: Deploy Admin API Configuration Job"
-      #   run: |
-      #     echo "⚙️  STEP 9: Deploying Admin API Configuration (Sync Wave 10)..."
-      #     echo "=============================================================="
-      #     kubectl apply -f argocd-apps/keycloak-admin-config-app.yaml
-      #     echo "✅ Admin API Configuration ArgoCD application created"
-      #     echo ""
-      #     echo "📋 Monitoring configuration job:"
-      #     echo "1. Watch job: kubectl get jobs -n keycloak -w"
-      #     echo "2. View logs: kubectl logs job/keycloak-admin-config-job -n keycloak -f"
-      #     echo "3. Check completion: kubectl wait --for=condition=complete job/keycloak-admin-config-job -n keycloak --timeout=600s"
-      #   env:
-      #     KUBECONFIG: ./kubeconfig.yaml
+      - name: "STEP 9: Deploy Admin API Configuration Job"
+        run: |
+           echo "⚙️  STEP 9: Deploying Admin API Configuration (Sync Wave 10)..."
+           echo "=============================================================="
+           kubectl apply -f argocd-apps/keycloak-admin-config-app.yaml
+           echo "✅ Admin API Configuration ArgoCD application created"
+           echo ""
+           echo "📋 Monitoring configuration job:"
+           echo "1. Watch job: kubectl get jobs -n keycloak -w"
+           echo "2. View logs: kubectl logs job/keycloak-admin-config-job -n keycloak -f"
+           echo "3. Check completion: kubectl wait --for=condition=complete job/keycloak-admin-config-job -n keycloak --timeout=600s"
+        env:
+           KUBECONFIG: ./kubeconfig.yaml
 
       # =============================================================================
       # STEP 10: FINAL VERIFICATION - COMMENTED OUT

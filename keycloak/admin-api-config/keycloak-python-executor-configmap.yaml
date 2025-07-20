@@ -1,0 +1,153 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: keycloak-python-executor
+  namespace: keycloak
+  labels:
+    app.kubernetes.io/name: keycloak-python-config
+    app.kubernetes.io/component: configuration
+    app.kubernetes.io/part-of: keycloak
+    app.kubernetes.io/managed-by: argocd
+data:
+  # Main orchestrator
+  main.py: |
+    """
+    Main Orchestrator
+    Coordinates all Keycloak configuration operations
+    """
+    import sys
+    from config.environment import Environment
+    from config.constants import Constants
+    from utils.logger import PadminiLogger
+    from utils.keycloak_client import KeycloakClient
+    from actions.realm_manager import RealmManager
+    from actions.client_scope_manager import ClientScopeManager
+    from actions.ppcs_client.ppcs_client_manager import PPCSClientManager
+    from actions.asm_client.asm_client_manager import ASMClientManager
+    from actions.user_profile_manager import UserProfileManager
+
+
+    class KeycloakOrchestrator:
+        """
+        Main orchestrator for Keycloak configuration.
+        Handles the complete setup/teardown of Padmini Systems realm.
+        """
+        
+        def __init__(self):
+            self.env = Environment()
+            self.constants = Constants()
+            self.logger = PadminiLogger(__name__)
+            self.keycloak_client = None
+            self.managers = {}
+            
+        def initialize(self) -> bool:
+            """Initialize Keycloak client and all managers."""
+            try:
+                self.logger.start_operation("Keycloak orchestrator initialization")
+                
+                # Initialize Keycloak client
+                self.keycloak_client = KeycloakClient(
+                    server_url=self.env.KEYCLOAK_URL,
+                    username=self.env.KEYCLOAK_ADMIN_USERNAME,
+                    password=self.env.KEYCLOAK_ADMIN_PASSWORD
+                )
+                
+                if not self.keycloak_client.connect():
+                    self.logger.error("Failed to connect to Keycloak")
+                    return False
+                    
+                # Initialize all managers
+                self.managers = {
+                    'realm': RealmManager(self.keycloak_client, self.constants),
+                    'client_scopes': ClientScopeManager(
+                        self.keycloak_client, self.constants
+                    ),
+                    'ppcs_client': PPCSClientManager(
+                        self.keycloak_client, self.constants
+                    ),
+                    'asm_client': ASMClientManager(
+                        self.keycloak_client, self.constants
+                    ),
+                    'user_profile': UserProfileManager(
+                        self.keycloak_client, self.constants
+                    )
+                }
+                
+                self.logger.success(
+                    "Keycloak orchestrator initialized successfully"
+                )
+                return True
+                
+            except Exception as e:
+                self.logger.error(f"Failed to initialize orchestrator: {str(e)}")
+                return False
+
+
+    def main():
+        """Main entry point."""
+        orchestrator = KeycloakOrchestrator()
+        
+        if not orchestrator.initialize():
+            sys.exit(1)
+        
+        # Get action from environment
+        action = orchestrator.env.ACTION
+        
+        if action == 'create':
+            success = orchestrator.create_configuration()
+        elif action == 'destroy':
+            success = orchestrator.destroy_configuration()
+        elif action == 'validate':
+            success = orchestrator.validate_configuration()
+        else:
+            orchestrator.logger.error(f"Unknown action: {action}")
+            orchestrator.logger.info("Valid actions: create, destroy, validate")
+            sys.exit(1)
+        
+        if success:
+            orchestrator.logger.success(f"Action '{action}' completed successfully!")
+            sys.exit(0)
+        else:
+            orchestrator.logger.error(f"Action '{action}' failed!")
+            sys.exit(1)
+
+
+    if __name__ == "__main__":
+        main()
+
+  # Requirements file
+  requirements.txt: |
+    # Padmini Systems Keycloak Admin API Configuration
+    # Enterprise-grade Python dependencies
+
+    # HTTP client with connection pooling and retry capabilities
+    requests>=2.31.0
+
+    # Kubernetes Python client for secrets integration
+    kubernetes>=28.1.0
+
+    # Enhanced logging and validation
+    colorama>=0.4.6
+
+    # JSON manipulation and validation
+    jsonschema>=4.19.0
+
+    # Date/time utilities
+    python-dateutil>=2.8.2
+
+    # Environment variable handling
+    python-dotenv>=1.0.0
+
+    # Retry decorators for robust API calls
+    tenacity>=8.2.3
+
+    # Type hints support for Python < 3.9
+    typing-extensions>=4.8.0
+
+  # Package init files
+  __init__.py: ""
+  config/__init__.py: ""
+  utils/__init__.py: ""
+  actions/__init__.py: ""
+  actions/ppcs_client/__init__.py: ""
+  actions/asm_client/__init__.py: ""
