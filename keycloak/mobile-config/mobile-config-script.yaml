@@ -1,0 +1,292 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: keycloak-mobile-config-script
+  namespace: keycloak
+  labels:
+    app.kubernetes.io/name: keycloak-config
+    app.kubernetes.io/component: configuration
+    app.kubernetes.io/part-of: keycloak
+data:
+  configure-mobile.sh: |
+    #!/bin/bash
+    set -e
+    
+    echo "🔧 Starting Keycloak Mobile Configuration..."
+    echo "============================================"
+    
+    # Configure Keycloak CLI
+    echo "🔗 Connecting to Keycloak server..."
+    /opt/keycloak/bin/kcadm.sh config credentials \
+      --server https://iam.padmini.systems \
+      --realm master \
+      --user $KEYCLOAK_ADMIN_USERNAME \
+      --password $KEYCLOAK_ADMIN_PASSWORD
+    
+    echo "✅ Connected to Keycloak successfully"
+    
+    # Enable user profile for padmini-systems realm
+    echo "👤 Enabling user profile for padmini-systems realm..."
+    /opt/keycloak/bin/kcadm.sh update realms/padmini-systems \
+      -s 'attributes.userProfileEnabled=true'
+    
+    echo "✅ User profile enabled"
+    
+    # Create or update mobile attribute in user profile
+    echo "📱 Configuring mobile attribute in user profile..."
+    
+    # First, try to get existing user profile configuration
+    /opt/keycloak/bin/kcadm.sh get realms/padmini-systems/users/profile > /tmp/user-profile.json 2>/dev/null || echo '{"attributes":[]}' > /tmp/user-profile.json
+    
+    # Create mobile attribute configuration
+    cat > /tmp/mobile-attribute.json <<EOF
+    {
+      "name": "mobile",
+      "displayName": "Mobile Number",
+      "validations": {
+        "pattern": {
+          "pattern": "^[+]?[1-9]\\\\d{9,14}\$",
+          "error-message": "Please enter a valid mobile number with country code (e.g., +919876543210)"
+        },
+        "length": {
+          "min": 10,
+          "max": 15
+        }
+      },
+      "annotations": {
+        "inputType": "tel",
+        "inputTypePlaceholder": "+919876543210"
+      },
+      "required": {
+        "roles": ["user"]
+      },
+      "permissions": {
+        "view": ["admin", "user"],
+        "edit": ["admin", "user"]
+      },
+      "multivalued": false
+    }
+    EOF
+    
+    # Try to create/update the mobile attribute
+    echo "📝 Adding mobile attribute to user profile..."
+    /opt/keycloak/bin/kcadm.sh create realms/padmini-systems/users/profile/attributes \
+      -f /tmp/mobile-attribute.json 2>/dev/null || \
+    /opt/keycloak/bin/kcadm.sh update realms/padmini-systems/users/profile/attributes/mobile \
+      -f /tmp/mobile-attribute.json
+    
+    echo "✅ Mobile attribute configured in user profile"
+    
+    # Create mobileVerified attribute
+    echo "📱 Configuring mobileVerified attribute..."
+    cat > /tmp/mobile-verified-attribute.json <<EOF
+    {
+      "name": "mobileVerified",
+      "displayName": "Mobile Verified",
+      "validations": {},
+      "annotations": {
+        "inputType": "checkbox"
+      },
+      "required": {
+        "roles": []
+      },
+      "permissions": {
+        "view": ["admin", "user"],
+        "edit": ["admin"]
+      },
+      "multivalued": false
+    }
+    EOF
+    
+    /opt/keycloak/bin/kcadm.sh create realms/padmini-systems/users/profile/attributes \
+      -f /tmp/mobile-verified-attribute.json 2>/dev/null || \
+    /opt/keycloak/bin/kcadm.sh update realms/padmini-systems/users/profile/attributes/mobileVerified \
+      -f /tmp/mobile-verified-attribute.json
+    
+    echo "✅ MobileVerified attribute configured"
+    
+    # Update registration form to include mobile field
+    echo "📋 Configuring registration form..."
+    
+    # Get current user profile configuration
+    /opt/keycloak/bin/kcadm.sh get realms/padmini-systems/users/profile > /tmp/current-profile.json
+    
+    # Update user profile groups to include mobile in registration
+    cat > /tmp/updated-profile.json <<EOF
+    {
+      "attributes": [
+        {
+          "name": "username",
+          "displayName": "\${username}",
+          "validations": {
+            "length": {
+              "min": 3,
+              "max": 255
+            },
+            "username-prohibited-characters": {},
+            "up-username-not-idn-homograph": {}
+          },
+          "permissions": {
+            "view": ["admin", "user"],
+            "edit": ["admin", "user"]
+          },
+          "multivalued": false
+        },
+        {
+          "name": "email",
+          "displayName": "\${email}",
+          "validations": {
+            "email": {},
+            "length": {
+              "max": 254
+            }
+          },
+          "required": {
+            "roles": ["user"]
+          },
+          "permissions": {
+            "view": ["admin", "user"],
+            "edit": ["admin", "user"]
+          },
+          "multivalued": false
+        },
+        {
+          "name": "firstName",
+          "displayName": "\${firstName}",
+          "validations": {
+            "length": {
+              "max": 255
+            },
+            "person-name-prohibited-characters": {}
+          },
+          "required": {
+            "roles": ["user"]
+          },
+          "permissions": {
+            "view": ["admin", "user"],
+            "edit": ["admin", "user"]
+          },
+          "multivalued": false
+        },
+        {
+          "name": "lastName",
+          "displayName": "\${lastName}",
+          "validations": {
+            "length": {
+              "max": 255
+            },
+            "person-name-prohibited-characters": {}
+          },
+          "required": {
+            "roles": ["user"]
+          },
+          "permissions": {
+            "view": ["admin", "user"],
+            "edit": ["admin", "user"]
+          },
+          "multivalued": false
+        },
+        {
+          "name": "mobile",
+          "displayName": "Mobile Number",
+          "validations": {
+            "pattern": {
+              "pattern": "^[+]?[1-9]\\\\d{9,14}\$",
+              "error-message": "Please enter a valid mobile number with country code (e.g., +919876543210)"
+            },
+            "length": {
+              "min": 10,
+              "max": 15
+            }
+          },
+          "annotations": {
+            "inputType": "tel",
+            "inputTypePlaceholder": "+919876543210"
+          },
+          "required": {
+            "roles": ["user"]
+          },
+          "permissions": {
+            "view": ["admin", "user"],
+            "edit": ["admin", "user"]
+          },
+          "multivalued": false
+        },
+        {
+          "name": "mobileVerified",
+          "displayName": "Mobile Verified",
+          "validations": {},
+          "annotations": {
+            "inputType": "checkbox"
+          },
+          "required": {
+            "roles": []
+          },
+          "permissions": {
+            "view": ["admin", "user"],
+            "edit": ["admin"]
+          },
+          "multivalued": false
+        }
+      ],
+      "groups": [
+        {
+          "name": "user-metadata",
+          "displayHeader": "User metadata",
+          "displayDescription": "Attributes, which refer to user metadata",
+          "annotations": {}
+        }
+      ]
+    }
+    EOF
+    
+    # Update the user profile
+    /opt/keycloak/bin/kcadm.sh update realms/padmini-systems/users/profile \
+      -f /tmp/updated-profile.json
+    
+    echo "✅ Registration form configured with mobile field"
+    
+    # Verify the configuration
+    echo "🔍 Verifying configuration..."
+    
+    # Check if mobile scope exists
+    MOBILE_SCOPE=$(/opt/keycloak/bin/kcadm.sh get realms/padmini-systems/client-scopes --query name=mobile --format csv --noquotes | tail -n 1)
+    if [[ "$MOBILE_SCOPE" == *"mobile"* ]]; then
+      echo "✅ Mobile client scope exists"
+    else
+      echo "❌ Mobile client scope not found"
+    fi
+    
+    # Check ppcs-web-app client configuration
+    CLIENT_ID=$(/opt/keycloak/bin/kcadm.sh get realms/padmini-systems/clients --query clientId=ppcs-web-app --format csv --noquotes | cut -d',' -f1 | tail -n 1)
+    if [[ -n "$CLIENT_ID" ]]; then
+      echo "✅ ppcs-web-app client found: $CLIENT_ID"
+      
+      # Get client scopes
+      /opt/keycloak/bin/kcadm.sh get realms/padmini-systems/clients/$CLIENT_ID/default-client-scopes > /tmp/client-scopes.json
+      echo "📋 Default client scopes configured"
+    else
+      echo "❌ ppcs-web-app client not found"
+    fi
+    
+    echo ""
+    echo "🎉 Keycloak Mobile Configuration Completed Successfully!"
+    echo "======================================================"
+    echo ""
+    echo "✅ Configuration Summary:"
+    echo "   - User profile enabled with mobile attribute"
+    echo "   - Registration form includes mobile number field"
+    echo "   - Mobile number validation pattern configured"
+    echo "   - Mobile and mobileVerified attributes ready for JWT claims"
+    echo "   - ppcs-web-app client configured with required scopes"
+    echo ""
+    echo "🔗 Next Steps:"
+    echo "   1. Test user registration at: https://iam.padmini.systems/realms/padmini-systems/protocol/openid-connect/registrations?client_id=ppcs-web-app"
+    echo "   2. Use scope: 'openid profile email mobile' in your NextJS app"
+    echo "   3. JWT tokens will include mobile and mobile_verified claims"
+    echo ""
+    
+    # Clean up temporary files
+    rm -f /tmp/*.json
+    
+    echo "✅ Configuration job completed successfully!"

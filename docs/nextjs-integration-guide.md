@@ -119,21 +119,39 @@ export default NextAuth({
    scope: "openid profile email mobile"  // Final scope
    ```
 
-**Expected JWT Claims after fix:**
+### Expected JWT Claims After Configuration
 ```json
 {
   "sub": "user-uuid-here",
-  "preferred_username": "john.doe", 
-  "given_name": "John",
-  "family_name": "Doe",
-  "name": "John Doe",
-  "email": "john.doe@example.com",
+  "preferred_username": "ramanuj",
+  "given_name": "Ramanuj", 
+  "family_name": "Kumar",
+  "name": "Ramanuj Kumar",
+  "email": "ramanuj@padmini.systems",
   "email_verified": true,
-  "mobile": "+919876543210"
+  "mobile": "+919876543210",
+  "mobile_verified": false
 }
 ```
 
-## 🔍 Testing URLs
+### Complete Authentication Flow Test
+
+1. **User Registration URL with Mobile Collection:**
+   ```
+   https://iam.padmini.systems/realms/padmini-systems/protocol/openid-connect/registrations?client_id=ppcs-web-app&response_type=code&scope=openid%20profile%20email%20mobile&redirect_uri=http://localhost:3000/api/auth/callback/keycloak
+   ```
+
+2. **Registration Form Fields:**
+   - Username
+   - Email  
+   - First Name
+   - Last Name
+   - **Mobile Number** (with validation pattern)
+
+3. **NextJS Scope Configuration:**
+   ```typescript
+   scope: "openid profile email mobile"
+   ```## 🔍 Testing URLs
 
 ### 1. Test Authentication URL
 ```

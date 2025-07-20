@@ -1,0 +1,27 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: keycloak-mobile-config-app
+  namespace: argocd
+  labels:
+    app.kubernetes.io/name: keycloak-mobile-config
+    app.kubernetes.io/part-of: keycloak
+    app.kubernetes.io/instance: padmini
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/padminisys/keycloak-ops.git
+    targetRevision: HEAD
+    path: keycloak/mobile-config
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: keycloak
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - PrunePropagationPolicy=foreground
+      - PruneLast=true
+  revisionHistoryLimit: 10

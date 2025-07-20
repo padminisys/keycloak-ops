@@ -130,6 +130,9 @@ spec:
     # User attributes configuration
     attributes:
       userProfileEnabled: "true"
+      # Enable mobile attribute collection
+      "userProfile.mobile.required": "true"
+      "userProfile.mobile.enabled": "true"
       
     # NOTE: userProfile configuration is not supported in KeycloakRealmImport CRD
     # User profile settings need to be configured manually via Keycloak Admin Console
@@ -240,7 +243,7 @@ spec:
               "access.token.claim": "true"
               "userinfo.token.claim": "true"
         
-        # FIXED: Essential OIDC scopes for NextAuth.js
+        # FIXED: Essential OIDC scopes for NextAuth.js including mobile
         defaultClientScopes:
           - "openid"
           - "profile"
@@ -249,11 +252,11 @@ spec:
           - "acr"
           - "roles"
         optionalClientScopes:
+          - "mobile"
           - "address"
           - "phone"
           - "offline_access"
           - "microprofile-jwt"
-          - "mobile"
         
         attributes:
           "oidc.ciba.grant.enabled": "false"
@@ -490,6 +493,17 @@ spec:
               "user.attribute": "mobile"
               "claim.name": "mobile"
               "jsonType.label": "String"
+              "id.token.claim": "true"
+              "access.token.claim": "true"
+              "userinfo.token.claim": "true"
+          - name: "mobile verified"
+            protocol: "openid-connect"
+            protocolMapper: "oidc-usermodel-attribute-mapper"
+            consentRequired: false
+            config:
+              "user.attribute": "mobileVerified"
+              "claim.name": "mobile_verified"
+              "jsonType.label": "boolean"
               "id.token.claim": "true"
               "access.token.claim": "true"
               "userinfo.token.claim": "true"
