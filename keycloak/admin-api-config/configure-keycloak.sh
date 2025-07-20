@@ -82,7 +82,7 @@ echo "🏰 Creating/Updating realm: $REALM_NAME..."
     "starttls": "$SMTP_STARTTLS",
     "user": "$SMTP_USER",
     "password": "$SMTP_PASSWORD",
-    "from": "noreply@padmini.systems",
+    "from": "khushisoftwareindia@gmail.com",
     "fromDisplayName": "Padmini Systems"
   }
 }

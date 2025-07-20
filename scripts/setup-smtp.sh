@@ -10,9 +10,9 @@ echo "🔧 Setting up SMTP configuration for Keycloak..."
 # SMTP Configuration Variables
 SMTP_HOST="smtp.gmail.com"
 SMTP_PORT="587"
-SMTP_USER=""  # Set your SMTP username
-SMTP_PASSWORD=""  # Set your SMTP password/app password
-SMTP_FROM="noreply@padmini.systems"
+SMTP_USER="khushisoftwareindia@gmail.com"  # Set your SMTP username
+SMTP_PASSWORD="fjnaoprwwjgyeees"  # Set your SMTP password/app password
+SMTP_FROM="khushisoftwareindia@gmail.com"
 SMTP_FROM_DISPLAY_NAME="Padmini Systems"
 
 # Check if variables are set

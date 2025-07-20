@@ -38,7 +38,7 @@ jobs:
           echo "Checking for secrets..."
           
           # Check PostgreSQL secret
-          if kubectl get secret postgresql-secret -n postgresql >/dev/null 2>&1; then
+          if kubectl get secret keycloak-postgresql -n keycloak >/dev/null 2>&1; then
             echo "✅ PostgreSQL secret found"
           else
             echo "❌ PostgreSQL secret NOT found"
@@ -80,60 +80,60 @@ jobs:
       # =============================================================================
       # STEP 3: DEPLOY POSTGRESQL (Sync Wave 2) - COMMENTED OUT
       # =============================================================================
-      # - name: "STEP 3: Deploy PostgreSQL Database"
-      #   run: |
-      #     echo "🗄️  STEP 3: Deploying PostgreSQL Database (Sync Wave 2)..."
-      #     echo "========================================================"
-      #     kubectl apply -f argocd-apps/postgresql/postgresql-app.yaml
-      #     echo "✅ PostgreSQL ArgoCD application created"
-      #     echo ""
-      #     echo "📋 Manual verification steps:"
-      #     echo "1. Check PostgreSQL pods: kubectl get pods -n postgresql"
-      #     echo "2. Check services: kubectl get svc -n postgresql"
-      #     echo "3. Test connection: kubectl exec -it <postgres-pod> -n postgresql -- psql -U postgres"
-      #     echo ""
-      #     echo "⚠️  WAIT for PostgreSQL to be ready before uncommenting next step!"
-      #   env:
-      #     KUBECONFIG: ./kubeconfig.yaml
+      - name: "STEP 3: Deploy PostgreSQL Database"
+        run: |
+           echo "🗄️  STEP 3: Deploying PostgreSQL Database (Sync Wave 2)..."
+           echo "========================================================"
+           kubectl apply -f argocd-apps/postgresql/postgresql-app.yaml
+           echo "✅ PostgreSQL ArgoCD application created"
+           echo ""
+           echo "📋 Manual verification steps:"
+           echo "1. Check PostgreSQL pods: kubectl get pods -n postgresql"
+           echo "2. Check services: kubectl get svc -n postgresql"
+           echo "3. Test connection: kubectl exec -it <postgres-pod> -n postgresql -- psql -U postgres"
+           echo ""
+           echo "⚠️  WAIT for PostgreSQL to be ready before uncommenting next step!"
+        env:
+           KUBECONFIG: ./kubeconfig.yaml
 
       # =============================================================================
       # STEP 4: DEPLOY CERTIFICATES (Sync Wave 3) - COMMENTED OUT
       # =============================================================================
-      # - name: "STEP 4: Deploy TLS Certificates"
-      #   run: |
-      #     echo "🔒 STEP 4: Deploying TLS Certificates (Sync Wave 3)..."
-      #     echo "===================================================="
-      #     kubectl apply -f argocd-apps/certificates/certificates-app.yaml
-      #     echo "✅ Certificates ArgoCD application created"
-      #     echo ""
-      #     echo "📋 Manual verification steps:"
-      #     echo "1. Check certificates: kubectl get certificates -n keycloak"
-      #     echo "2. Check TLS secrets: kubectl get secrets -n keycloak | grep tls"
-      #     echo "3. Verify certificate status: kubectl describe certificate keycloak-tls -n keycloak"
-      #     echo ""
-      #     echo "⚠️  WAIT for certificates to be ready before uncommenting next step!"
-      #   env:
-      #     KUBECONFIG: ./kubeconfig.yaml
+      - name: "STEP 4: Deploy TLS Certificates"
+        run: |
+           echo "🔒 STEP 4: Deploying TLS Certificates (Sync Wave 3)..."
+           echo "===================================================="
+           kubectl apply -f argocd-apps/certificates/certificates-app.yaml
+           echo "✅ Certificates ArgoCD application created"
+           echo ""
+           echo "📋 Manual verification steps:"
+           echo "1. Check certificates: kubectl get certificates -n keycloak"
+           echo "2. Check TLS secrets: kubectl get secrets -n keycloak | grep tls"
+           echo "3. Verify certificate status: kubectl describe certificate keycloak-tls -n keycloak"
+           echo ""
+           echo "⚠️  WAIT for certificates to be ready before uncommenting next step!"
+        env:
+           KUBECONFIG: ./kubeconfig.yaml
 
       # =============================================================================
       # STEP 5: DEPLOY KEYCLOAK INSTANCE (Sync Wave 4) - COMMENTED OUT
       # =============================================================================
-      # - name: "STEP 5: Deploy Keycloak Instance"
-      #   run: |
-      #     echo "🔑 STEP 5: Deploying Keycloak Instance (Sync Wave 4)..."
-      #     echo "===================================================="
-      #     kubectl apply -f argocd-apps/keycloak/keycloak-instance-app.yaml
-      #     echo "✅ Keycloak Instance ArgoCD application created"
-      #     echo ""
-      #     echo "📋 Manual verification steps:"
-      #     echo "1. Check Keycloak custom resource: kubectl get keycloaks -n keycloak"
-      #     echo "2. Check Keycloak pods: kubectl get pods -n keycloak -l app=keycloak"
-      #     echo "3. Check service: kubectl get svc -n keycloak"
-      #     echo "4. Wait for ready status: kubectl wait --for=condition=Ready pod -l app=keycloak -n keycloak --timeout=600s"
-      #     echo ""
-      #     echo "⚠️  CRITICAL: Manual HTTPS configuration required before next step!"
-      #   env:
-      #     KUBECONFIG: ./kubeconfig.yaml
+      - name: "STEP 5: Deploy Keycloak Instance"
+        run: |
+           echo "🔑 STEP 5: Deploying Keycloak Instance (Sync Wave 4)..."
+           echo "===================================================="
+           kubectl apply -f argocd-apps/keycloak/keycloak-instance-app.yaml
+           echo "✅ Keycloak Instance ArgoCD application created"
+           echo ""
+           echo "📋 Manual verification steps:"
+           echo "1. Check Keycloak custom resource: kubectl get keycloaks -n keycloak"
+           echo "2. Check Keycloak pods: kubectl get pods -n keycloak -l app=keycloak"
+           echo "3. Check service: kubectl get svc -n keycloak"
+           echo "4. Wait for ready status: kubectl wait --for=condition=Ready pod -l app=keycloak -n keycloak --timeout=600s"
+           echo ""
+           echo "⚠️  CRITICAL: Manual HTTPS configuration required before next step!"
+        env:
+           KUBECONFIG: ./kubeconfig.yaml
 
       # =============================================================================
       # STEP 6: MANUAL HTTPS CONFIGURATION - INSTRUCTIONS ONLY
