@@ -1,6 +1,6 @@
 # Padmini Systems Keycloak Configuration
 # Multi-stage secure Docker build
-FROM python:3.13-slim as builder
+FROM python:3.13-slim AS builder
 
 # Set build arguments
 ARG BUILD_DATE
@@ -48,7 +48,7 @@ RUN python -m py_compile app/main.py && \
 #############################################
 # Production stage
 #############################################
-FROM python:3.13-slim as production
+FROM python:3.13-slim AS production
 
 # Set build arguments for production
 ARG BUILD_DATE
@@ -86,7 +86,7 @@ RUN pip install --no-cache-dir --user -r requirements.txt && \
     rm requirements.txt
 
 # Set ownership and permissions
-RUN chown -R padmini:padmini /app /home/padmini && \
+RUN chown -R padmini:padmini /app && \
     chmod -R 755 /app && \
     chmod +x main.py
 
@@ -97,7 +97,7 @@ USER padmini
 ENV PYTHONPATH=/app \
     PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
-    PATH=/home/padmini/.local/bin:$PATH
+    PATH=/app/.local/bin:$PATH
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
