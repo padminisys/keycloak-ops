@@ -313,3 +313,48 @@ class KeycloakClient:
     def delete_group(self, realm_name: str, group_id: str) -> bool:
         """Delete group."""
         return self.delete(f'/realms/{realm_name}/groups/{group_id}')
+    
+    # User Profile Operations
+    def get_user_profile_config(self, realm_name: str) -> Optional[Dict[str, Any]]:
+        """Get user profile configuration."""
+        try:
+            # Try the user profile API endpoint
+            config = self.get(f'/realms/{realm_name}/user-profile')
+            if config:
+                return config
+            
+            # Fallback: try components endpoint
+            components = self.get(f'/realms/{realm_name}/components?parent={realm_name}&type=org.keycloak.userprofile.UserProfileProvider')
+            if components:
+                return components[0] if components else None
+            
+            return None
+            
+        except Exception as e:
+            self.logger.error(f"Error getting user profile config: {str(e)}")
+            return None
+    
+    def update_user_profile_config(self, realm_name: str, config: Dict[str, Any]) -> bool:
+        """Update user profile configuration."""
+        try:
+            # Try to update via user profile API
+            result = self.put(f'/realms/{realm_name}/user-profile', config)
+            if result:
+                return True
+            
+            # If that fails, try components API
+            components = self.get(f'/realms/{realm_name}/components?parent={realm_name}&type=org.keycloak.userprofile.UserProfileProvider')
+            if components:
+                component_id = components[0]['id']
+                config['id'] = component_id
+                config['providerId'] = 'declarative-user-profile'
+                config['providerType'] = 'org.keycloak.userprofile.UserProfileProvider'
+                config['parentId'] = realm_name
+                
+                return self.put(f'/realms/{realm_name}/components/{component_id}', config)
+            
+            return False
+            
+        except Exception as e:
+            self.logger.error(f"Error updating user profile config: {str(e)}")
+            return False

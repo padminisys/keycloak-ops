@@ -22,12 +22,9 @@ class UserProfileManager(BaseManager):
             if not self._create_default_groups():
                 return False
             
-            # Note: User profile configuration with custom attributes
-            # requires Admin Console manual setup in current Keycloak version
-            self.logger.info("User profile mobile field requires manual setup")
-            self.logger.info("Instructions:")
-            self.logger.info("1. Admin Console → Realm Settings → User Profile")
-            self.logger.info("2. Create mobile attribute with validation")
+            # Configure user profile attributes (including mobile field)
+            if not self._configure_user_profile():
+                return False
             
             self.logger.success("User profile configuration completed")
             return True
@@ -168,3 +165,89 @@ class UserProfileManager(BaseManager):
         except Exception as e:
             self.logger.error(f"Error validating groups: {str(e)}")
             return False
+    
+    def _configure_user_profile(self) -> bool:
+        """Configure user profile attributes including mobile field."""
+        try:
+            self.logger.info("Configuring user profile attributes...")
+            
+            # Get current user profile configuration
+            current_config = self.keycloak_client.get_user_profile_config(self.realm_name)
+            
+            if not current_config:
+                self.logger.warning("Could not retrieve current user profile config")
+                self.logger.info("Manual setup required:")
+                self.logger.info("1. Admin Console → Realm Settings → User Profile")
+                self.logger.info("2. Add mobile attribute with validation")
+                return True  # Don't fail the entire process
+            
+            # Update user profile configuration
+            updated_config = self._merge_user_profile_config(current_config)
+            
+            if self.keycloak_client.update_user_profile_config(self.realm_name, updated_config):
+                self.logger.success("User profile configuration updated")
+                return True
+            else:
+                self.logger.warning("Failed to update user profile via API")
+                self.logger.info("Manual setup required:")
+                self.logger.info("1. Admin Console → Realm Settings → User Profile")
+                self.logger.info("2. Add mobile attribute with validation")
+                return True  # Don't fail the entire process
+                
+        except Exception as e:
+            self.logger.error(f"Error configuring user profile: {str(e)}")
+            self.logger.info("Manual setup required:")
+            self.logger.info("1. Admin Console → Realm Settings → User Profile")
+            self.logger.info("2. Add mobile attribute with validation")
+            return True  # Don't fail the entire process
+    
+    def _merge_user_profile_config(self, current_config: dict) -> dict:
+        """Merge our mobile attribute configuration with existing config."""
+        try:
+            # Ensure attributes section exists
+            if 'attributes' not in current_config:
+                current_config['attributes'] = []
+            
+            # Check if mobile attribute already exists
+            mobile_exists = any(
+                attr.get('name') == 'mobile' 
+                for attr in current_config['attributes']
+            )
+            
+            if not mobile_exists:
+                # Add mobile attribute configuration
+                mobile_attr = {
+                    "name": "mobile",
+                    "displayName": "Mobile Number",
+                    "validations": {
+                        "pattern": {
+                            "pattern": "^[+]?[1-9]\\d{9,14}$",
+                            "error-message": "Enter valid mobile with country code"
+                        },
+                        "length": {
+                            "min": 10,
+                            "max": 15
+                        }
+                    },
+                    "annotations": {
+                        "inputType": "phone"
+                    },
+                    "required": {
+                        "roles": ["user"]
+                    },
+                    "permissions": {
+                        "view": ["admin", "user"],
+                        "edit": ["admin", "user"]
+                    }
+                }
+                
+                current_config['attributes'].append(mobile_attr)
+                self.logger.info("Mobile attribute configuration added")
+            else:
+                self.logger.info("Mobile attribute already exists in user profile")
+            
+            return current_config
+            
+        except Exception as e:
+            self.logger.error(f"Error merging user profile config: {str(e)}")
+            return current_config

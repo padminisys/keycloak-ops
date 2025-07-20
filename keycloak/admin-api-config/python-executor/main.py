@@ -202,8 +202,8 @@ class KeycloakOrchestrator:
         self.logger.info("   Claims: sub, preferred_username, given_name,")
         self.logger.info("           family_name, name, email, email_verified, mobile")
         self.logger.info("")
-        self.logger.info("⚠️  Manual Step Required:")
-        self.logger.info("   Add mobile field to user registration:")
+        self.logger.info("✅ Mobile field configured automatically")
+        self.logger.info("   If mobile field doesn't appear, check:")
         self.logger.info("   Keycloak Admin → Realm Settings → User Profile")
 
 
