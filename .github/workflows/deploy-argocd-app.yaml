@@ -1,4 +1,4 @@
-name: Deploy Keycloak Infrastructure via ArgoCD
+name: Incremental Keycloak Deployment with Manual Verification
 on:
   push:
     branches:
@@ -23,71 +23,241 @@ jobs:
         with:
           version: 'v1.33.2'
 
-      - name: Verify Kustomize Configuration
+      # =============================================================================
+      # STEP 1: VERIFY MANUAL SECRETS (Prerequisites)
+      # =============================================================================
+      - name: "STEP 1: Verify Manual Secrets"
         run: |
-          kubectl kustomize keycloak-operator
+          echo "🔐 STEP 1: Verifying manual secrets..."
+          echo "======================================="
+          echo ""
+          echo "Required secrets that should be created manually:"
+          echo "1. PostgreSQL secret (database credentials)"
+          echo "2. SMTP secret (email configuration)"
+          echo ""
+          echo "Checking for secrets..."
+          
+          # Check PostgreSQL secret
+          if kubectl get secret postgresql-secret -n postgresql >/dev/null 2>&1; then
+            echo "✅ PostgreSQL secret found"
+          else
+            echo "❌ PostgreSQL secret NOT found"
+            echo "   Please create: kubectl create secret generic postgresql-secret --from-literal=username=postgres --from-literal=password=your-password -n postgresql"
+          fi
+          
+          # Check SMTP secret  
+          if kubectl get secret padmini-keycloak-smtp -n keycloak >/dev/null 2>&1; then
+            echo "✅ SMTP secret found"
+          else
+            echo "❌ SMTP secret NOT found"
+            echo "   Please run: ./scripts/setup-smtp.sh"
+          fi
+          
+          echo ""
+          echo "📝 Manual verification required before proceeding to next step!"
         env:
           KUBECONFIG: ./kubeconfig.yaml
 
-      - name: Apply Keycloak Operator ArgoCD Application
+      # =============================================================================
+      # STEP 2: DEPLOY KEYCLOAK OPERATOR (Sync Wave 1)
+      # =============================================================================
+      - name: "STEP 2: Deploy Keycloak Operator"
         run: |
+          echo "🔧 STEP 2: Deploying Keycloak Operator (Sync Wave 1)..."
+          echo "======================================================"
           kubectl apply -f argocd-apps/keycloak-operator-app.yaml
+          echo "✅ Keycloak Operator ArgoCD application created"
+          echo ""
+          echo "📋 Manual verification steps:"
+          echo "1. Check ArgoCD UI: kubectl port-forward svc/argocd-server -n argocd 8080:443"
+          echo "2. Verify operator pods: kubectl get pods -n keycloak"
+          echo "3. Verify CRDs: kubectl get crd | grep keycloak"
+          echo ""
+          echo "⚠️  WAIT for operator to be ready before uncommenting next step!"
         env:
           KUBECONFIG: ./kubeconfig.yaml
 
-      - name: Apply PostgreSQL ArgoCD Application
-        run: |
-          kubectl apply -f argocd-apps/postgresql/postgresql-app.yaml
-        env:
-          KUBECONFIG: ./kubeconfig.yaml
+      # =============================================================================
+      # STEP 3: DEPLOY POSTGRESQL (Sync Wave 2) - COMMENTED OUT
+      # =============================================================================
+      # - name: "STEP 3: Deploy PostgreSQL Database"
+      #   run: |
+      #     echo "🗄️  STEP 3: Deploying PostgreSQL Database (Sync Wave 2)..."
+      #     echo "========================================================"
+      #     kubectl apply -f argocd-apps/postgresql/postgresql-app.yaml
+      #     echo "✅ PostgreSQL ArgoCD application created"
+      #     echo ""
+      #     echo "📋 Manual verification steps:"
+      #     echo "1. Check PostgreSQL pods: kubectl get pods -n postgresql"
+      #     echo "2. Check services: kubectl get svc -n postgresql"
+      #     echo "3. Test connection: kubectl exec -it <postgres-pod> -n postgresql -- psql -U postgres"
+      #     echo ""
+      #     echo "⚠️  WAIT for PostgreSQL to be ready before uncommenting next step!"
+      #   env:
+      #     KUBECONFIG: ./kubeconfig.yaml
 
-      - name: Apply Certificates ArgoCD Application
-        run: |
-          kubectl apply -f argocd-apps/certificates/certificates-app.yaml
-        env:
-          KUBECONFIG: ./kubeconfig.yaml
+      # =============================================================================
+      # STEP 4: DEPLOY CERTIFICATES (Sync Wave 3) - COMMENTED OUT
+      # =============================================================================
+      # - name: "STEP 4: Deploy TLS Certificates"
+      #   run: |
+      #     echo "🔒 STEP 4: Deploying TLS Certificates (Sync Wave 3)..."
+      #     echo "===================================================="
+      #     kubectl apply -f argocd-apps/certificates/certificates-app.yaml
+      #     echo "✅ Certificates ArgoCD application created"
+      #     echo ""
+      #     echo "📋 Manual verification steps:"
+      #     echo "1. Check certificates: kubectl get certificates -n keycloak"
+      #     echo "2. Check TLS secrets: kubectl get secrets -n keycloak | grep tls"
+      #     echo "3. Verify certificate status: kubectl describe certificate keycloak-tls -n keycloak"
+      #     echo ""
+      #     echo "⚠️  WAIT for certificates to be ready before uncommenting next step!"
+      #   env:
+      #     KUBECONFIG: ./kubeconfig.yaml
 
-      - name: Apply Keycloak Instance ArgoCD Application
-        run: |
-          kubectl apply -f argocd-apps/keycloak/keycloak-instance-app.yaml
-        env:
-          KUBECONFIG: ./kubeconfig.yaml
+      # =============================================================================
+      # STEP 5: DEPLOY KEYCLOAK INSTANCE (Sync Wave 4) - COMMENTED OUT
+      # =============================================================================
+      # - name: "STEP 5: Deploy Keycloak Instance"
+      #   run: |
+      #     echo "🔑 STEP 5: Deploying Keycloak Instance (Sync Wave 4)..."
+      #     echo "===================================================="
+      #     kubectl apply -f argocd-apps/keycloak/keycloak-instance-app.yaml
+      #     echo "✅ Keycloak Instance ArgoCD application created"
+      #     echo ""
+      #     echo "📋 Manual verification steps:"
+      #     echo "1. Check Keycloak custom resource: kubectl get keycloaks -n keycloak"
+      #     echo "2. Check Keycloak pods: kubectl get pods -n keycloak -l app=keycloak"
+      #     echo "3. Check service: kubectl get svc -n keycloak"
+      #     echo "4. Wait for ready status: kubectl wait --for=condition=Ready pod -l app=keycloak -n keycloak --timeout=600s"
+      #     echo ""
+      #     echo "⚠️  CRITICAL: Manual HTTPS configuration required before next step!"
+      #   env:
+      #     KUBECONFIG: ./kubeconfig.yaml
 
-      - name: Verify Keycloak Operator Deployment
-        run: |
-          kubectl get pods -n keycloak
-          kubectl get crd | grep keycloak
-        env:
-          KUBECONFIG: ./kubeconfig.yaml
+      # =============================================================================
+      # STEP 6: MANUAL HTTPS CONFIGURATION - INSTRUCTIONS ONLY
+      # =============================================================================
+      # - name: "STEP 6: Manual HTTPS Configuration Instructions"
+      #   run: |
+      #     echo "🌐 STEP 6: Manual HTTPS Configuration Required"
+      #     echo "=============================================="
+      #     echo ""
+      #     echo "CRITICAL MANUAL STEPS REQUIRED:"
+      #     echo "1. Configure ingress/load balancer for iam.padmini.systems"
+      #     echo "2. Ensure HTTPS traffic reaches Keycloak pods"
+      #     echo "3. Test access: curl -k https://iam.padmini.systems/realms/master"
+      #     echo "4. Verify Admin Console: https://iam.padmini.systems/admin"
+      #     echo ""
+      #     echo "✅ Once HTTPS is working, uncomment next step and commit!"
 
-      - name: Verify PostgreSQL Deployment
-        run: |
-          kubectl get pods -n keycloak-db
-          kubectl get svc -n keycloak-db
-        env:
-          KUBECONFIG: ./kubeconfig.yaml
+      # =============================================================================
+      # STEP 7: MANUAL ADMIN SETUP - INSTRUCTIONS ONLY
+      # =============================================================================
+      # - name: "STEP 7: Manual Admin Setup Instructions"
+      #   run: |
+      #     echo "👤 STEP 7: Manual Admin User Setup Required"
+      #     echo "=========================================="
+      #     echo ""
+      #     echo "MANUAL STEPS REQUIRED:"
+      #     echo "1. Access: https://iam.padmini.systems/admin"
+      #     echo "2. Login with temporary admin credentials"
+      #     echo "3. Create permanent admin user 'ramanuj'"
+      #     echo "4. Set secure password: 'rbd@6321P'"
+      #     echo "5. Disable temporary admin account"
+      #     echo ""
+      #     echo "✅ Once admin user is ready, create admin secret and uncomment next step!"
 
-      - name: Verify Certificates Deployment
-        run: |
-          kubectl get certificates -n keycloak
-          kubectl get secrets -n keycloak | grep tls
-        env:
-          KUBECONFIG: ./kubeconfig.yaml
+      # =============================================================================
+      # STEP 8: VERIFY ADMIN SECRET - COMMENTED OUT
+      # =============================================================================
+      # - name: "STEP 8: Verify Admin Secret for Configuration Job"
+      #   run: |
+      #     echo "🔐 STEP 8: Verifying Admin Secret..."
+      #     echo "===================================="
+      #     echo ""
+      #     echo "Checking for Keycloak admin secret..."
+      #     
+      #     if kubectl get secret padmini-keycloak-admin -n keycloak >/dev/null 2>&1; then
+      #       echo "✅ Admin secret found"
+      #     else
+      #       echo "❌ Admin secret NOT found"
+      #       echo ""
+      #       echo "Please create admin secret:"
+      #       echo "kubectl create secret generic padmini-keycloak-admin \\"
+      #       echo "  --from-literal=KEYCLOAK_ADMIN_USERNAME=ramanuj \\"
+      #       echo "  --from-literal=KEYCLOAK_ADMIN_PASSWORD='rbd@6321P' \\"
+      #       echo "  -n keycloak"
+      #       exit 1
+      #     fi
+      #     echo ""
+      #     echo "✅ All secrets ready for configuration job!"
+      #   env:
+      #     KUBECONFIG: ./kubeconfig.yaml
 
-      - name: Verify Keycloak Instance Deployment
-        run: |
-          kubectl get keycloaks -n keycloak
-          kubectl get pods -n keycloak -l app=keycloak
-        env:
-          KUBECONFIG: ./kubeconfig.yaml
+      # =============================================================================
+      # STEP 9: DEPLOY ADMIN API CONFIGURATION JOB (Sync Wave 10) - COMMENTED OUT
+      # =============================================================================
+      # - name: "STEP 9: Deploy Admin API Configuration Job"
+      #   run: |
+      #     echo "⚙️  STEP 9: Deploying Admin API Configuration (Sync Wave 10)..."
+      #     echo "=============================================================="
+      #     kubectl apply -f argocd-apps/keycloak-admin-config-app.yaml
+      #     echo "✅ Admin API Configuration ArgoCD application created"
+      #     echo ""
+      #     echo "📋 Monitoring configuration job:"
+      #     echo "1. Watch job: kubectl get jobs -n keycloak -w"
+      #     echo "2. View logs: kubectl logs job/keycloak-admin-config-job -n keycloak -f"
+      #     echo "3. Check completion: kubectl wait --for=condition=complete job/keycloak-admin-config-job -n keycloak --timeout=600s"
+      #   env:
+      #     KUBECONFIG: ./kubeconfig.yaml
 
-      - name: Apply Keycloak Realm ArgoCD Application
+      # =============================================================================
+      # STEP 10: FINAL VERIFICATION - COMMENTED OUT
+      # =============================================================================
+      # - name: "STEP 10: Final Deployment Verification"
+      #   run: |
+      #     echo "🎯 STEP 10: Final Verification and Testing..."
+      #     echo "==========================================="
+      #     echo ""
+      #     echo "🏆 DEPLOYMENT SUMMARY:"
+      #     echo "======================"
+      #     kubectl get applications -n argocd | grep keycloak || true
+      #     kubectl get pods -n keycloak
+      #     kubectl get secrets -n keycloak
+      #     echo ""
+      #     echo "🔗 TESTING URLS:"
+      #     echo "==============="
+      #     echo "✅ Keycloak Admin: https://iam.padmini.systems/admin"
+      #     echo "✅ Registration: https://iam.padmini.systems/realms/padmini-systems/protocol/openid-connect/registrations?client_id=ppcs-web-app&response_type=code&scope=openid%20profile%20email%20mobile&redirect_uri=http://localhost:3000/api/auth/callback/keycloak"
+      #     echo "✅ OIDC Discovery: https://iam.padmini.systems/realms/padmini-systems/.well-known/openid_configuration"
+      #     echo ""
+      #     echo "📋 FINAL MANUAL STEP:"
+      #     echo "===================="
+      #     echo "⚠️  Add mobile field to user registration via Admin Console:"
+      #     echo "   Keycloak Admin → Realm Settings → User Profile → Attributes → Create Attribute"
+      #     echo "   - Name: mobile"
+      #     echo "   - Display name: Mobile Number" 
+      #     echo "   - Validation: ^[+]?[1-9]\\d{9,14}$"
+      #     echo "   - Required for: user role"
+      #     echo ""
+      #     echo "🎉 PADMINI SYSTEMS KEYCLOAK DEPLOYMENT COMPLETED!"
+      #   env:
+      #     KUBECONFIG: ./kubeconfig.yaml
+
+      # Current active verification
+      - name: Current Step Verification
         run: |
-          kubectl apply -f argocd-apps/keycloak-realm-app.yaml
-        env:
-          KUBECONFIG: ./kubeconfig.yaml          
-      - name: Apply Keycloak mobile config ArgoCD Application
-        run: |
-          kubectl apply -f argocd-apps/keycloak-mobile-config-app.yaml
+          echo ""
+          echo "📋 CURRENT STATUS: Step 2 (Keycloak Operator) Active"
+          echo "================================================="
+          echo ""
+          echo "✅ Next actions required:"
+          echo "1. Verify operator deployment in ArgoCD UI"
+          echo "2. Check operator pods are running"
+          echo "3. Verify CRDs are installed"
+          echo "4. Once verified, uncomment Step 3 and commit"
+          echo ""
+          echo "🔄 Incremental deployment strategy ensures each step is verified!"
         env:
           KUBECONFIG: ./kubeconfig.yaml          

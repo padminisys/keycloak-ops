@@ -1,8 +1,10 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: padmini-keycloak
+  name: keycloak-instance
   namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "4"  # After certificates
   finalizers:
     - resources-finalizer.argocd.argoproj.io
 spec:

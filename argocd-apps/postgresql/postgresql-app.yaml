@@ -1,8 +1,10 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: keycloak-postgresql
+  name: postgresql
   namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"  # After operator
   labels:
     app.kubernetes.io/component: postgresql
   finalizers:

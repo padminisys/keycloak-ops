@@ -1,27 +1,226 @@
-# Enterprise padmini-Grade Keycloak GitOps Platform
+# Padmini Systems - Keycloak Operations
 
-## 🎯 **Project Overview**
+Complete Keycloak setup for Padmini Private Cloud Service (PPCS) using GitOps with ArgoCD.
 
-This repository contains a complete GitOps-based infrastructure for deploying and managing an **Enterprise padmini-Grade Keycloak Identity and Access Management (IAM) Platform** on Kubernetes clusters.
+## 🎯 Business Requirements
 
-## 🏢 **Business Objectives**
+This configuration provides authentication for:
+- **NextJS Web Application** (ppcs-web-app)
+- **Quarkus Microservices** (asm-microservices)
 
-### **Centralized Identity Management**
-- **Single Sign-On (SSO)**: All firm employees and customers use one Keycloak account to access any service
-- **Unified Authentication**: Consistent login experience across all applications and services
-- **Centralized User Management**: Single source of truth for user identities and permissions
+### Required User Data in JWT:
+- ✅ **Name**: Full name (given_name, family_name, name)
+- ✅ **Username**: Login identifier (preferred_username)  
+- ✅ **UUID**: User ID (sub)
+- ✅ **Mobile**: Mobile number with country code (mobile)
+- ✅ **Email**: Email address (email, email_verified)
 
-### **Multi-Tenant Access Control**
-- **Employee Access**: Department-based role management with granular permissions
-- **Customer Access**: Tier-based service access based on subscription levels
-- **Application Integration**: All internal and customer-facing applications secured behind Keycloak
+## 🏗️ Architecture
 
-### **Enterprise Features**
-- **Federated Authentication**: Google, GitHub, LinkedIn OAuth integration
-- **Advanced Role Management**: Hierarchical roles, permissions, and access policies
-- **padmini Security**: TLS certificates, high availability, monitoring, and backup
+```
+┌─────────────────┐    ┌──────────────────┐    ┌─────────────────┐
+│   ArgoCD        │───▶│   Keycloak       │───▶│   Applications  │
+│   GitOps        │    │   Admin API      │    │   - NextJS      │
+│                 │    │   Configuration  │    │   - Microservices│
+└─────────────────┘    └──────────────────┘    └─────────────────┘
+```
 
-## 🏗️ **Current Project Structure**
+### Components:
+- **Keycloak Operator**: Manages Keycloak instance lifecycle
+- **PostgreSQL**: Database backend for Keycloak
+- **Admin API Job**: Configures realm, clients, and scopes
+- **SMTP Integration**: Email verification and notifications
+- **ArgoCD**: GitOps deployment and management
+
+## 📁 Project Structure
+
+```
+keycloak-ops/
+├── argocd-apps/                    # ArgoCD Application definitions
+│   ├── keycloak-operator-app.yaml  # Keycloak Operator deployment
+│   ├── keycloak-admin-config-app.yaml # Realm configuration job
+│   ├── postgresql-app.yaml         # Database deployment
+│   └── certificates-app.yaml       # TLS certificates
+├── keycloak/
+│   ├── instances/                  # Keycloak instance configuration
+│   │   └── production-keycloak.yaml
+│   └── admin-api-config/          # Complete realm configuration
+│       ├── configure-keycloak.sh   # Configuration script
+│       ├── keycloak-config-script.yaml # ConfigMap
+│       ├── keycloak-config-job.yaml    # Kubernetes Job
+│       └── kustomization.yaml
+├── keycloak-operator/             # Operator deployment
+│   └── kustomization.yaml
+├── postgresql/                    # Database configuration
+│   └── values.yaml
+├── certificates/                  # TLS certificate management
+│   └── certificate.yaml
+├── docs/                         # Documentation
+│   ├── nextjs-integration-guide.md
+│   └── quarkus-integration-guide.md
+├── scripts/                      # Utility scripts
+│   └── setup-smtp.sh
+└── runbooks/                     # Manual operations
+    ├── manual-secret/
+    └── manual-ingress/
+```
+
+## 🚀 Deployment
+
+### Prerequisites
+- Kubernetes cluster
+- ArgoCD installed
+- Domain: `iam.padmini.systems`
+
+### 1. Deploy ArgoCD Applications
+```bash
+# Deploy Keycloak Operator
+kubectl apply -f argocd-apps/keycloak-operator-app.yaml
+
+# Deploy PostgreSQL
+kubectl apply -f argocd-apps/postgresql-app.yaml
+
+# Deploy TLS Certificates  
+kubectl apply -f argocd-apps/certificates-app.yaml
+
+# Deploy Keycloak Instance
+kubectl apply -f argocd-apps/keycloak-instance-app.yaml
+
+# Deploy Realm Configuration
+kubectl apply -f argocd-apps/keycloak-admin-config-app.yaml
+```
+
+### 2. Setup Secrets
+```bash
+# SMTP Configuration
+./scripts/setup-smtp.sh
+
+# Admin Credentials (already created)
+kubectl create secret generic padmini-keycloak-admin \
+  --from-literal=KEYCLOAK_ADMIN_USERNAME=ramanuj \
+  --from-literal=KEYCLOAK_ADMIN_PASSWORD='rbd@6321P' \
+  -n keycloak
+```
+
+### 3. Verify Deployment
+```bash
+# Check ArgoCD applications
+kubectl get applications -n argocd
+
+# Check Keycloak pods
+kubectl get pods -n keycloak
+
+# Check configuration job
+kubectl logs job/keycloak-admin-config-job -n keycloak
+```
+
+## 🔧 Configuration Details
+
+### Realm: `padmini-systems`
+- **Display Name**: Padmini Systems
+- **Registration**: Enabled with email verification
+- **Themes**: Keycloak default with custom branding
+- **Security**: Brute force protection, SSL required
+
+### Clients
+1. **ppcs-web-app** (Public Client)
+   - NextJS web application
+   - Redirect URIs: `http://localhost:3000/api/auth/callback/keycloak`
+   - Scopes: `openid profile email mobile`
+
+2. **asm-microservices** (Confidential Client)  
+   - Quarkus microservices
+   - Service account enabled
+   - Authorization services enabled
+
+### Client Scopes & JWT Claims
+```json
+{
+  "sub": "user-uuid",
+  "preferred_username": "username", 
+  "given_name": "First",
+  "family_name": "Last",
+  "name": "First Last",
+  "email": "user@domain.com",
+  "email_verified": true,
+  "mobile": "+919876543210"
+}
+```
+
+## 🔗 Integration Guides
+
+- [NextJS Integration](docs/nextjs-integration-guide.md)
+- [Quarkus Integration](docs/quarkus-integration-guide.md)
+
+## 🔍 Testing URLs
+
+### User Registration
+```
+https://iam.padmini.systems/realms/padmini-systems/protocol/openid-connect/registrations?client_id=ppcs-web-app&response_type=code&scope=openid%20profile%20email%20mobile&redirect_uri=http://localhost:3000/api/auth/callback/keycloak
+```
+
+### Admin Console
+```
+https://iam.padmini.systems/admin
+```
+
+### OIDC Discovery
+```
+https://iam.padmini.systems/realms/padmini-systems/.well-known/openid_configuration
+```
+
+## ⚠️ Manual Configuration Required
+
+After deployment, add mobile field to user registration:
+
+1. **Keycloak Admin Console** → **Realm Settings** → **User Profile** → **Attributes**
+2. **Create Attribute**:
+   - Name: `mobile`
+   - Display name: `Mobile Number`
+   - Validation: `^[+]?[1-9]\d{9,14}$`
+   - Required for: `user` role
+
+## 🛠️ Operations
+
+### View Logs
+```bash
+# Keycloak instance logs
+kubectl logs -f deployment/padmini-keycloak -n keycloak
+
+# Configuration job logs  
+kubectl logs job/keycloak-admin-config-job -n keycloak
+
+# Operator logs
+kubectl logs -f deployment/keycloak-operator -n keycloak
+```
+
+### Update Configuration
+1. Modify configuration in `keycloak/admin-api-config/`
+2. Commit changes to Git
+3. ArgoCD will automatically sync and run the job
+
+### Backup & Restore
+- Database backups via PostgreSQL operator
+- Realm export via Keycloak Admin API
+- Configuration stored in Git
+
+## 🔒 Security Considerations
+
+- ✅ HTTPS enforced (SSL required: external)
+- ✅ Brute force protection enabled
+- ✅ Email verification required
+- ✅ Secrets managed via Kubernetes secrets
+- ✅ RBAC with roles and groups
+- ⚠️ Change default client secrets in production
+- ⚠️ Configure proper SMTP credentials
+
+## 📞 Support
+
+For issues and questions:
+- Check ArgoCD application status
+- Review job logs for configuration errors
+- Verify secrets are properly configured
+- Test authentication flows step by step
 
 ```
 keycloak-ops/

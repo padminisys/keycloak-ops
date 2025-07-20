@@ -119,7 +119,31 @@ export default NextAuth({
    scope: "openid profile email mobile"  // Final scope
    ```
 
-### Expected JWT Claims After Configuration
+# NextJS Keycloak Integration Guide
+
+## 🎯 Business Requirements Fulfilled
+
+This configuration provides exactly what you need:
+- **Name**: Full name (given_name, family_name, name)
+- **Username**: Login identifier (preferred_username)
+- **UUID**: User ID (sub)
+- **Mobile**: Mobile number with country code (mobile)
+- **Email**: Email address (email, email_verified)
+
+## 🔧 Complete Admin API Configuration
+
+This project uses **Admin API only** - no CRD limitations!
+
+### ✅ What's Configured:
+- ✅ Padmini Systems realm with all security settings
+- ✅ Essential OIDC scopes: `openid`, `profile`, `email`, `mobile`
+- ✅ NextJS public client (ppcs-web-app) 
+- ✅ Microservices confidential client (asm-microservices)
+- ✅ Protocol mappers for all business requirements
+- ✅ SMTP configuration from secrets
+- ✅ Default roles and groups
+
+### 📋 Expected JWT Token Claims:
 ```json
 {
   "sub": "user-uuid-here",
@@ -129,10 +153,121 @@ export default NextAuth({
   "name": "Ramanuj Kumar",
   "email": "ramanuj@padmini.systems",
   "email_verified": true,
-  "mobile": "+919876543210",
-  "mobile_verified": false
+  "mobile": "+919876543210"
 }
 ```
+
+## 🚀 NextJS Integration
+
+### Environment Variables (.env.local)
+```bash
+NEXTAUTH_URL=http://localhost:3000
+NEXTAUTH_SECRET=your-random-secret-here
+
+KEYCLOAK_ISSUER=https://iam.padmini.systems/realms/padmini-systems
+KEYCLOAK_CLIENT_ID=ppcs-web-app
+KEYCLOAK_CLIENT_SECRET=  # Leave empty for public client
+```
+
+### NextAuth.js Configuration
+```typescript
+// app/api/auth/[...nextauth]/route.ts
+import NextAuth from "next-auth"
+import KeycloakProvider from "next-auth/providers/keycloak"
+
+export default NextAuth({
+  providers: [
+    KeycloakProvider({
+      clientId: process.env.KEYCLOAK_CLIENT_ID!,
+      clientSecret: process.env.KEYCLOAK_CLIENT_SECRET || "",
+      issuer: process.env.KEYCLOAK_ISSUER,
+      authorization: {
+        params: {
+          scope: "openid profile email mobile"
+        }
+      }
+    })
+  ],
+  callbacks: {
+    async jwt({ token, account, profile }) {
+      if (account && profile) {
+        token.mobile = profile.mobile
+        token.accessToken = account.access_token
+        token.userId = profile.sub
+      }
+      return token
+    },
+    async session({ session, token }) {
+      session.accessToken = token.accessToken
+      session.user.mobile = token.mobile
+      session.user.id = token.userId
+      return session
+    }
+  }
+})
+```
+
+## 🔗 Test URLs
+
+### 1. User Registration
+```
+https://iam.padmini.systems/realms/padmini-systems/protocol/openid-connect/registrations?client_id=ppcs-web-app&response_type=code&scope=openid%20profile%20email%20mobile&redirect_uri=http://localhost:3000/api/auth/callback/keycloak
+```
+
+### 2. User Login
+```
+https://iam.padmini.systems/realms/padmini-systems/protocol/openid-connect/auth?client_id=ppcs-web-app&response_type=code&scope=openid%20profile%20email%20mobile&redirect_uri=http://localhost:3000/api/auth/callback/keycloak
+```
+
+### 3. OIDC Discovery
+```
+https://iam.padmini.systems/realms/padmini-systems/.well-known/openid_configuration
+```
+
+## ⚠️  One Manual Step Required
+
+After deployment, add mobile field to registration form:
+
+1. Go to: **Keycloak Admin Console** → `https://iam.padmini.systems/admin`
+2. Navigate to: **Realm Settings** → **User Profile** → **Attributes**
+3. Click: **Create Attribute**
+4. Configure:
+   - **Name**: `mobile`
+   - **Display name**: `Mobile Number`
+   - **Validation**: `^[+]?[1-9]\d{9,14}$`
+   - **Required for**: `user` role
+   - **Permissions**: view=[admin,user], edit=[admin,user]
+
+## 🛠️ Troubleshooting
+
+### Issue: "Invalid scopes" error
+**Solution**: Verify scopes are properly assigned in Keycloak Admin Console:
+- Go to: **Clients** → **ppcs-web-app** → **Client Scopes**
+- **Default scopes**: openid, profile, email
+- **Optional scopes**: mobile
+
+### Issue: Missing mobile in JWT
+**Solution**: 
+1. Verify mobile attribute exists in user profile
+2. Check mobile scope has correct mapper
+3. Ensure mobile scope is assigned to client
+
+## 📦 Deployment Architecture
+
+1. **Keycloak Operator**: Manages Keycloak instance
+2. **PostgreSQL**: Database backend  
+3. **Admin API Job**: Configures realm, clients, scopes
+4. **SMTP Secrets**: Email configuration
+5. **ArgoCD**: GitOps deployment management
+
+## 🎯 Production Checklist
+
+- [ ] Update client secrets for production
+- [ ] Configure production redirect URIs  
+- [ ] Set up proper SMTP configuration
+- [ ] Add mobile field to user registration form
+- [ ] Test complete authentication flow
+- [ ] Verify JWT token contains all required claims
 
 ### Complete Authentication Flow Test
 

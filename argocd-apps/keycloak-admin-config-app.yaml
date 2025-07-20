@@ -1,10 +1,12 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: keycloak-mobile-config-app
+  name: keycloak-admin-config
   namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "10"  # FINAL: After manual steps
   labels:
-    app.kubernetes.io/name: keycloak-mobile-config
+    app.kubernetes.io/name: keycloak-admin-config
     app.kubernetes.io/part-of: keycloak
     app.kubernetes.io/instance: padmini
 spec:
@@ -12,7 +14,7 @@ spec:
   source:
     repoURL: https://github.com/padminisys/keycloak-ops.git
     targetRevision: HEAD
-    path: keycloak/mobile-config
+    path: keycloak/admin-api-config
   destination:
     server: https://kubernetes.default.svc
     namespace: keycloak
