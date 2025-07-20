@@ -77,11 +77,13 @@ RUN groupadd -r padmini && useradd -r -g padmini -s /bin/false -d /app padmini
 # Set working directory
 WORKDIR /app
 
-# Copy Python packages from builder
-COPY --from=builder /root/.local /home/padmini/.local
-
 # Copy application code from builder
 COPY --from=builder /build/app/ ./
+
+# Copy requirements and install Python packages in production
+COPY python-executor/requirements.txt .
+RUN pip install --no-cache-dir --user -r requirements.txt && \
+    rm requirements.txt
 
 # Set ownership and permissions
 RUN chown -R padmini:padmini /app /home/padmini && \
