@@ -21,13 +21,16 @@ spec:
       containers:
       - name: keycloak-python-config
         image: python:3.11-slim
-        workingDir: /app
+        workingDir: /app/python-executor
         command: ["/bin/bash"]
         args:
         - -c
         - |
-          echo "🚀 Starting Padmini Systems Keycloak configuration..."
-          pip install --no-cache-dir -r requirements.txt
+          echo "🚀 Starting Padmini Systems Keycloak Configuration..."
+          echo "Installing Python dependencies..."
+          pip install --no-cache-dir requests colorama jsonschema python-dateutil python-dotenv tenacity typing-extensions
+          echo "✅ Dependencies installed"
+          echo "🔧 Running Keycloak configuration..."
           python main.py
         env:
         # Action to perform (create, destroy, validate)
@@ -75,7 +78,7 @@ spec:
         - name: SMTP_STARTTLS
           value: "true"
         volumeMounts:
-        - name: python-executor
+        - name: python-code
           mountPath: /app
         resources:
           requests:
@@ -85,9 +88,10 @@ spec:
             memory: "1Gi"
             cpu: "1000m"
       volumes:
-      - name: python-executor
-        configMap:
-          name: keycloak-python-executor
+      - name: python-code
+        hostPath:
+          path: /home/ramanuj/git_repos/padmini/ppcs/keycloak-ops/keycloak/admin-api-config
+          type: Directory
       restartPolicy: OnFailure
       # Ensure job runs after Keycloak is ready
       initContainers:

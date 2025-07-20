@@ -1,12 +1,12 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: keycloak-admin-config
+  name: keycloak-python-config
   namespace: argocd
   annotations:
     argocd.argoproj.io/sync-wave: "10"  # FINAL: After manual steps
   labels:
-    app.kubernetes.io/name: keycloak-admin-config
+    app.kubernetes.io/name: keycloak-python-config
     app.kubernetes.io/part-of: keycloak
     app.kubernetes.io/instance: padmini
 spec:

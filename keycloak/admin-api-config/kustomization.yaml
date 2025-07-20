@@ -2,14 +2,13 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
 metadata:
-  name: keycloak-admin-config
+  name: keycloak-python-config
   namespace: keycloak
 
 resources:
-  - keycloak-config-script.yaml
-  - keycloak-config-job.yaml
+  - keycloak-python-config-job.yaml
 
 commonLabels:
-  app.kubernetes.io/name: keycloak-admin-config
+  app.kubernetes.io/name: keycloak-python-config
   app.kubernetes.io/component: configuration
   app.kubernetes.io/part-of: keycloak
