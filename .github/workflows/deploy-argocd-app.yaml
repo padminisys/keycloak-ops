@@ -86,3 +86,8 @@ jobs:
           kubectl apply -f argocd-apps/keycloak-realm-app.yaml
         env:
           KUBECONFIG: ./kubeconfig.yaml          
+      - name: Apply Keycloak mobile config ArgoCD Application
+        run: |
+          kubectl apply -f argocd-apps/keycloak-mobile-config-app.yaml
+        env:
+          KUBECONFIG: ./kubeconfig.yaml          
