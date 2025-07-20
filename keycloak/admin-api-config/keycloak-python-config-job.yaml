@@ -20,18 +20,8 @@ spec:
     spec:
       containers:
       - name: keycloak-python-config
-        image: python:3.11-slim
-        workingDir: /app/python-executor
-        command: ["/bin/bash"]
-        args:
-        - -c
-        - |
-          echo "🚀 Starting Padmini Systems Keycloak Configuration..."
-          echo "Installing Python dependencies..."
-          pip install --no-cache-dir requests colorama jsonschema python-dateutil python-dotenv tenacity typing-extensions
-          echo "✅ Dependencies installed"
-          echo "🔧 Running Keycloak configuration..."
-          python main.py
+        image: ghcr.io/padminisys/keycloak-config:latest
+        imagePullPolicy: Always
         env:
         # Action to perform (create, destroy, validate)
         - name: ACTION
@@ -77,9 +67,6 @@ spec:
           value: "false"
         - name: SMTP_STARTTLS
           value: "true"
-        volumeMounts:
-        - name: python-code
-          mountPath: /app
         resources:
           requests:
             memory: "512Mi"
@@ -87,12 +74,21 @@ spec:
           limits:
             memory: "1Gi"
             cpu: "1000m"
-      volumes:
-      - name: python-code
-        hostPath:
-          path: /home/ramanuj/git_repos/padmini/ppcs/keycloak-ops/keycloak/admin-api-config
-          type: Directory
+        securityContext:
+          runAsNonRoot: true
+          runAsUser: 1000
+          runAsGroup: 1000
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+              - ALL
       restartPolicy: OnFailure
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
       # Ensure job runs after Keycloak is ready
       initContainers:
       - name: wait-for-keycloak
@@ -114,5 +110,13 @@ spec:
             sleep 5
           done
           echo "✅ Admin console is ready!"
+        securityContext:
+          runAsNonRoot: true
+          runAsUser: 65534
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+              - ALL
   backoffLimit: 3
   ttlSecondsAfterFinished: 86400  # Keep job for 24 hours for debugging

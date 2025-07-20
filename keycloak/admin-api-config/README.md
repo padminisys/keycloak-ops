@@ -10,12 +10,24 @@ This directory contains a **complete enterprise-grade Python solution** for conf
 - **NextJS Integration**: Scope `openid profile email mobile` ready
 - **Microservices Support**: ASM client with service account capabilities
 
+## 🐳 Containerized Solution
+
+The solution is now fully containerized using a **multi-stage secure Docker build**:
+
+- **Base Image**: Python 3.13-slim for latest security patches
+- **Multi-stage build**: Optimized for minimal attack surface
+- **Non-root execution**: Enhanced security with dedicated user
+- **Multi-platform**: Support for linux/amd64 and linux/arm64
+- **Registry**: GitHub Container Registry (ghcr.io)
+
 ## 🏗️ Architecture
 
 ```
 python-executor/
 ├── main.py                    # 🎯 Main orchestrator
 ├── requirements.txt           # 📦 Dependencies
+├── Dockerfile                 # 🐳 Multi-stage container build
+├── .dockerignore             # 📋 Docker build optimization
 ├── config/
 │   ├── environment.py         # 🔐 K8s secrets integration
 │   └── constants.py          # ⚙️  All configurations
@@ -33,6 +45,37 @@ python-executor/
         └── asm_client_manager.py  # ⚙️  Microservices
 ```
 
+## 🚀 CI/CD Pipeline
+
+### Two-Stage Workflow
+1. **Docker Build Workflow** (`docker-build-keycloak-config.yaml`)
+   - 🐳 Builds secure Docker image
+   - 🛡️ Runs Trivy security scans
+   - 📦 Pushes to GitHub Container Registry
+   - 🏷️ Tags with commit SHA and branch
+
+2. **Deployment Workflow** (`deploy-argocd-app.yaml`) 
+   - ⏳ Waits for Docker build completion
+   - 🔄 Updates Job with latest image
+   - 🚀 Deploys via ArgoCD
+
+### Docker Image
+```bash
+# Latest image
+ghcr.io/padminisys/keycloak-config:latest
+
+# Specific commit
+ghcr.io/padminisys/keycloak-config:main-<sha>
+```
+
+## 🔧 Configuration Actions
+
+The solution supports multiple actions via environment variable:
+
+- `ACTION=create` - Create complete Keycloak configuration
+- `ACTION=destroy` - Rollback/destroy configuration  
+- `ACTION=validate` - Validate existing configuration
+
 ## 🚀 Deployment
 
 ### Prerequisites
@@ -41,12 +84,20 @@ python-executor/
    - `padmini-keycloak-admin` (KEYCLOAK_ADMIN_USERNAME, KEYCLOAK_ADMIN_PASSWORD)
    - `padmini-keycloak-smtp` (SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASSWORD)
 
-### Deploy with ArgoCD
+### Automated Deployment (Recommended)
 ```bash
-kubectl apply -f /path/to/argocd-apps/keycloak-admin-config-app.yaml
+# Triggers both Docker build and deployment
+git push origin main
 ```
 
-### Manual Deployment
+### Manual Docker Build
+```bash
+# Build and push image
+docker build -t ghcr.io/padminisys/keycloak-config:latest .
+docker push ghcr.io/padminisys/keycloak-config:latest
+```
+
+### Manual Deployment  
 ```bash
 kubectl apply -f keycloak-python-config-job.yaml
 ```

@@ -6,8 +6,14 @@ on:
   workflow_dispatch:
 
 jobs:
+  # First build the Docker image
+  build-docker:
+    uses: ./.github/workflows/docker-build-keycloak-config.yaml
+    secrets: inherit
+    
   deploy:
     runs-on: ubuntu-latest
+    needs: build-docker
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -196,19 +202,37 @@ jobs:
            KUBECONFIG: ./kubeconfig.yaml
 
       # =============================================================================
-      # STEP 9: DEPLOY ADMIN API CONFIGURATION JOB (Sync Wave 10) - COMMENTED OUT
+      # STEP 9: UPDATE DOCKER IMAGE AND DEPLOY ADMIN API CONFIGURATION JOB (Sync Wave 10)
       # =============================================================================
-      - name: "STEP 9: Deploy Admin API Configuration Job"
+      - name: "STEP 9a: Update Docker Image in Job"
         run: |
-           echo "⚙️  STEP 9: Deploying Admin API Configuration (Sync Wave 10)..."
+          echo "🐳 STEP 9a: Updating Docker image in Keycloak config job..."
+          echo "=========================================================="
+          
+          # Get the latest image tag from Docker build
+          LATEST_IMAGE="ghcr.io/padminisys/keycloak-config:${{ github.sha }}"
+          echo "Using image: $LATEST_IMAGE"
+          
+          # Update the Job YAML with the latest image
+          sed -i "s|image: ghcr.io/padminisys/keycloak-config:.*|image: $LATEST_IMAGE|g" keycloak/admin-api-config/keycloak-python-config-job.yaml
+          
+          echo "✅ Docker image updated in job configuration"
+        env:
+          KUBECONFIG: ./kubeconfig.yaml
+          
+      - name: "STEP 9b: Deploy Admin API Configuration Job"
+        run: |
+           echo "⚙️  STEP 9b: Deploying Admin API Configuration (Sync Wave 10)..."
            echo "=============================================================="
            kubectl apply -f argocd-apps/keycloak-admin-config-app.yaml
            echo "✅ Admin API Configuration ArgoCD application created"
            echo ""
            echo "📋 Monitoring configuration job:"
            echo "1. Watch job: kubectl get jobs -n keycloak -w"
-           echo "2. View logs: kubectl logs job/keycloak-admin-config-job -n keycloak -f"
-           echo "3. Check completion: kubectl wait --for=condition=complete job/keycloak-admin-config-job -n keycloak --timeout=600s"
+           echo "2. View logs: kubectl logs job/keycloak-python-config-job -n keycloak -f"
+           echo "3. Check completion: kubectl wait --for=condition=complete job/keycloak-python-config-job -n keycloak --timeout=600s"
+           echo ""
+           echo "🐳 Using Docker image: ghcr.io/padminisys/keycloak-config:${{ github.sha }}"
         env:
            KUBECONFIG: ./kubeconfig.yaml
 
