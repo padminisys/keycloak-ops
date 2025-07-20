@@ -11,6 +11,17 @@ on:
     paths:
       - 'keycloak/admin-api-config/**'
       - '.github/workflows/docker-build-keycloak-config.yaml'
+  workflow_call:
+    outputs:
+      image:
+        description: "Docker image name"
+        value: ${{ jobs.build-and-push.outputs.image }}
+      tag:
+        description: "Docker image tag"
+        value: ${{ jobs.build-and-push.outputs.tag }}
+      digest:
+        description: "Docker image digest"
+        value: ${{ jobs.build-and-push.outputs.digest }}
   workflow_dispatch:
     inputs:
       force_build:
