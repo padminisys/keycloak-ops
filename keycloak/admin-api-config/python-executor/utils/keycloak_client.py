@@ -76,15 +76,17 @@ class KeycloakClient:
         
         for attempt in range(max_attempts):
             try:
-                health_url = f"{self.server_url}/health/ready"
-                response = requests.get(health_url, timeout=5)
+                # Check if admin endpoint is accessible
+                admin_url = f"{self.server_url}/admin"
+                response = requests.get(admin_url, timeout=5)
                 
-                if response.status_code == 200:
+                # Any response (even 401/403) means Keycloak is running
+                if response.status_code in [200, 401, 403]:
                     self.logger.success("Keycloak is ready")
                     return True
                     
-            except Exception:
-                pass
+            except Exception as e:
+                self.logger.debug(f"Attempt {attempt + 1}/{max_attempts}: {str(e)}")
             
             self.logger.debug(f"Attempt {attempt + 1}/{max_attempts}, retrying...")
             time.sleep(10)
