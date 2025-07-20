@@ -28,7 +28,7 @@ spec:
           value: "create"
         # Keycloak connection details
         - name: KEYCLOAK_URL
-          value: "http://padmini-keycloak-service:8180"
+          value: "https://iam.padmini.systems"
         # Admin credentials from secret
         - name: KEYCLOAK_ADMIN_USERNAME
           valueFrom:
@@ -98,17 +98,17 @@ spec:
         - -c
         - |
           echo "⏳ Waiting for Keycloak service to be ready..."
-          # Check if Keycloak service is responding on port 8180
-          until curl -s -f --connect-timeout 5 http://padmini-keycloak-service:8180/ >/dev/null 2>&1; do
-            echo "Keycloak service not responding, waiting..."
-            sleep 10
+          # Check if Keycloak HTTPS service is responding
+          until curl -s -f --connect-timeout 10 https://iam.padmini.systems/ >/dev/null 2>&1; do
+            echo "Keycloak HTTPS service not responding, waiting..."
+            sleep 15
           done
-          echo "✅ Keycloak service is responding!"
+          echo "✅ Keycloak HTTPS service is responding!"
           
-          # Additional check for admin console - use a more reliable endpoint
-          until curl -s -f --connect-timeout 5 http://padmini-keycloak-service:8180/admin/ >/dev/null 2>&1; do
+          # Additional check for admin console
+          until curl -s -f --connect-timeout 10 https://iam.padmini.systems/admin/ >/dev/null 2>&1; do
             echo "Admin console not ready, waiting..."
-            sleep 5
+            sleep 10
           done
           echo "✅ Admin console is accessible!"
         securityContext:
