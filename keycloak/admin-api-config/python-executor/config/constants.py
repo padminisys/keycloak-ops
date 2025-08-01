@@ -29,13 +29,15 @@ class Constants:
         "authorizationServicesEnabled": False,
         "redirectUris": [
             "http://localhost:3000/api/auth/callback/keycloak",
-            "https://ppcs.padmini.systems/api/auth/callback/keycloak",
-            "https://app.padmini.systems/api/auth/callback/keycloak"
+            "https://graitcloud.com/api/auth/callback/keycloak",
+            "https://console.padmini.systems/api/auth/callback/keycloak",
+            "https://asm.padmini.systems/*"
         ],
         "webOrigins": [
             "http://localhost:3000",
-            "https://ppcs.padmini.systems",
-            "https://app.padmini.systems"
+            "https://graitcloud.com",
+            "https://console.padmini.systems",
+            "https://asm.padmini.systems"
         ],
         "attributes": {
             "oidc.ciba.grant.enabled": "false",
