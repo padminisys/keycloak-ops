@@ -22,9 +22,6 @@ spec:
   ingress:
     enabled: true
     className: nginx
-    annotations:
-      nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
-      nginx.ingress.kubernetes.io/ssl-passthrough: "true"    
   http:
     httpEnabled: true
     httpPort: 8180
@@ -33,8 +30,8 @@ spec:
   hostname:
     hostname: https://iam.padmini.systems
     admin: https://iam.padmini.systems
-    strict: true
-    backchannelDynamic: true
+    strict: false
+    backchannelDynamic: false
   features:
     enabled:
       - docker
