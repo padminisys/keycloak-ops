@@ -18,10 +18,21 @@ spec:
     namespace: keycloak
   syncPolicy:
     automated:
-      prune: true
-      selfHeal: true
+      prune: false
+      selfHeal: false
     syncOptions:
       - CreateNamespace=true
       - PrunePropagationPolicy=foreground
       - PruneLast=true
+      - Replace=false     # ADDED      
   revisionHistoryLimit: 10
+  ignoreDifferences:                          # ADDED
+    - group: apps
+      kind: StatefulSet
+      jsonPointers:
+        - /spec/replicas       # operator manages this
+    - group: networking.k8s.io
+      kind: Ingress
+      name: padmini-keycloak-ingress
+      jsonPointers:
+        - /spec/tls            # you patch this manually per runbook  

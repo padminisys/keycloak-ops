@@ -26,10 +26,23 @@ spec:
     namespace: keycloak
   syncPolicy:
     automated:
-      prune: true
-      selfHeal: true
+      prune: false
+      selfHeal: false
     syncOptions:
       - CreateNamespace=true
       - PrunePropagationPolicy=foreground
       - PruneLast=true
+      - Replace=false     # ADDED
+      - ApplyOutOfSyncOnly=true  # ADDED — only sync drifted resources      
   revisionHistoryLimit: 10
+  ignoreDifferences:                          # ADDED — entire block
+    - group: ""
+      kind: PersistentVolumeClaim
+      jsonPointers:
+        - /spec
+        - /metadata
+    - group: ""
+      kind: PersistentVolume
+      jsonPointers:
+        - /spec
+        - /metadata  
